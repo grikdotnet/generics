@@ -1,0 +1,31 @@
+{
+    "name": "grikdotnet/generics",
+    "description": "Generics implementation in PHP",
+    "type": "library",
+    "version": "0.1",
+    "require": {
+        "nikic/php-parser": "^5.2",
+        "php": ">=8.2",
+        "ext-tokenizer": "*",
+        "ext-json": "*",
+        "ext-ctype": "*",
+        "ext-mbstring":"*",
+        "composer-runtime-api": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Generics\\": "Generics/"
+        }
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Grigori Kochanov"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require-dev": {
+        "phpunit/phpunit": "^11"
+    }
+}
