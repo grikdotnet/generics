@@ -2,10 +2,13 @@
 
 namespace Generics\Internal;
 
+/**
+ * @internal
+ */
 class Container
 {
     /**
-     * @var array<ClassAggregate> $classes
+     * @var array<TokenAggregate> $classes
      */
     public array $classes = [];
     public FileCache $cache;
@@ -21,16 +24,16 @@ class Container
     public function isClassTemplate(string $class_name): bool
     {
         return isset($this->classes[$class_name])
-            && $this->classes[$class_name] instanceof ClassAggregate
+            && $this->classes[$class_name] instanceof TokenAggregate
             && $this->classes[$class_name]->isTemplate()
         ;
     }
 
     /**
      * @param string $class_name
-     * @return ClassAggregate|null
+     * @return TokenAggregate|null
      */
-    public function getClassTokens(string $class_name): ?ClassAggregate
+    public function getClassTokens(string $class_name): ?TokenAggregate
     {
         return $this->classes[$class_name] ?? null;
     }

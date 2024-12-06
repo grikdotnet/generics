@@ -2,6 +2,9 @@
 
 namespace Generics\Internal;
 
+/**
+ * @internal
+ */
 class FileCache
 {
     /** @var array<string, string> */

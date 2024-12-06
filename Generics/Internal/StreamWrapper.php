@@ -9,6 +9,9 @@ use PhpParser\NodeTraverser;
 use PhpParser\Parser\Php8;
 use UnexpectedValueException;
 
+/**
+ * @internal
+ */
 final class StreamWrapper
 {
     private static Container $container;
@@ -18,7 +21,8 @@ final class StreamWrapper
     private string $path = '';
 
     /**
-    * @return void
+     * @param Container $container
+     * @return void
      */
     public static function register(
         Container $container,
@@ -94,7 +98,7 @@ final class StreamWrapper
 
     public function url_stat()
     {
-        /** @todo Implement the method */
+        throw new \RuntimeException("Operation is not supported by Generics stream wrapper");
     }
 
     /**

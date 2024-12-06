@@ -7,7 +7,6 @@
         "nikic/php-parser": "^5.2",
         "php": ">=8.2",
         "ext-tokenizer": "*",
-        "ext-json": "*",
         "ext-ctype": "*",
         "ext-mbstring":"*",
         "composer-runtime-api": "*"

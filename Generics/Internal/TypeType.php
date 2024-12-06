@@ -4,15 +4,14 @@ namespace Generics\Internal;
 
 /**
  * A classification of the parameter types
+ * @internal
  */
 enum TypeType
 {
     /** Denotes that the parameter should be treated as a template */
     case Template;
-    /** The parameter has a built-in type like int or array*/
-    case Builtin;
-    /** Parameter is a user defined type, i.e. class or interface */
-    case UserDefined;
+    /** The parameter has a type like int or user class */
+    case Atomic;
     /** A composite type which is a combination of several types */
     case Union;
 }

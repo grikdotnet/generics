@@ -2,12 +2,18 @@
 
 namespace Generics\Internal;
 
-final readonly class Token
+/**
+ * @internal
+ */
+readonly class Token
 {
+    public TypeType $type_type;
     public function __construct(
-        public TypeType $type_type,
         public int      $offset,
         public string   $parameter_name,
-        public ?string   $parameter_type
-    ) {}
+        public ?string   $parameter_type,
+        TypeType $type_type = TypeType::Atomic
+    ) {
+        $this->type_type = $type_type;
+    }
 }
