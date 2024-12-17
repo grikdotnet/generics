@@ -2,45 +2,15 @@
 
 namespace Generics\Internal;
 
-/**
- * @internal
- */
-final class TokenAggregate implements \Iterator
-{
-    private bool $is_template = false;
-    private array $tokens = [];
+abstract class TokenAggregate implements \Iterator{
+    protected array $tokens = [];
 
     private bool $sorted = false;
-
-    public function __construct(public readonly string $classname){}
-
-    public function setIsTemplate(): void
-    {
-        $this->is_template = true;
-    }
 
     public function addToken(Token $token): void
     {
         $this->tokens[$token->offset] = $token;
         $this->sorted = false;
-    }
-
-    /**
-     * Check if the class contains a template type
-     * @return bool
-     */
-    public function isTemplate(): bool
-    {
-        return $this->is_template;
-    }
-
-    /**
-     * Check if the class contains template or generic parameters
-     * @return bool
-     */
-    public function hasGenerics(): bool
-    {
-        return $this->is_template || $this->tokens !== [];
     }
 
     public function getTokens(): array

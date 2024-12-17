@@ -48,25 +48,12 @@ final class Enable
             }
             if (str_starts_with($path, 'file://')) {
                 $path = substr($path,7);
+            }elseif (preg_match('~^\w+://~',$path)) {
+                return false;
             }
-
-            // true, false or null
-            $file_contain_generics = $container->cache->hasGenerics($path);
-
-            if ($file_contain_generics) {
+            if ($container->reader->hasGenerics($path)) {
                 $loader->addClassMap([$class => 'generic://'.$path]);
             }
-            if ($file_contain_generics === null && file_exists($path) && is_readable($path)) {
-                $code = file_get_contents($path);
-                if (str_contains($code,'Generics\\')) {
-                    $container->cache->setFileCache($path,$code);
-                    $container->cache->setHasGenerics($path, true);
-                    $loader->addClassMap([$class => 'generic://'.$path]);
-                }else{
-                    $container->cache->setHasGenerics($path, false);
-                }
-            }
-
             return false;
         },true,true);
     }
@@ -76,11 +63,13 @@ final class Enable
      */
     public function getComposerLoader(): ClassLoader
     {
-        $composer_autoload = dirname(__DIR__) . '/autoload.php';
-        if (!is_file($composer_autoload) || !is_readable($composer_autoload)) {
-            throw new \RuntimeException('Can not obtain a Composer loader');
+        $composer_path = dirname(__DIR__) . '/autoload.php';
+        is_file($composer_path) && is_readable($composer_path) && $composer = include $composer_path;
+
+        if (! ($composer ?? null) instanceof \Composer\Autoload\ClassLoader) {
+            throw new \RuntimeException('Could not obtain a Composer loader');
         }
-        return include $composer_autoload;
+        return $composer;
     }
 
     private function preloadInternals():void

@@ -40,7 +40,7 @@ final class StreamWrapper
         }
         $path = substr($path, 10);
 
-        $this->file_content = self::$container->cache->getFileCache($path) ?: file_get_contents($path);
+        $this->file_content = self::$container->reader->getFile($path);
 
         if ($this->file_content === false) {
             return false;
@@ -51,7 +51,8 @@ final class StreamWrapper
         $errorHandler = new Collecting;
         try {
             $ast = self::$parser->parse($this->file_content, $errorHandler);
-            $traverser = new NodeTraverser(new GenericsVisitor($this->file_content, self::$container));
+            $visitor = new GenericsVisitor($path, $this->file_content, self::$container);
+            $traverser = new NodeTraverser($visitor);
             $traverser->traverse($ast);
         }catch (Error $e) {
             print_r($e);
@@ -65,7 +66,7 @@ final class StreamWrapper
      */
     public function stream_close(): void
     {
-        self::$container->cache->dropFileCache($this->path);
+        self::$container->reader->clearFileCache($this->path);
         unset($this->file_content);
     }
 

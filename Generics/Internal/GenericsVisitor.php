@@ -11,10 +11,10 @@ use PhpParser\NodeVisitorAbstract;
 final class GenericsVisitor extends NodeVisitorAbstract {
 
     public function __construct(
+        private readonly string $filename,
         private readonly string $source_code,
         private readonly Container $container
-    ) {
-    }
+    ) {}
 
     /**
      * 2 cases should be processed: classes declared as generic,
@@ -26,15 +26,21 @@ final class GenericsVisitor extends NodeVisitorAbstract {
      */
     public function enterNode(Node $node): null
     {
-        if (! $node instanceof \PhpParser\Node\Stmt\Class_){
-            return null;
+        if ($node instanceof \PhpParser\Node\Stmt\Class_){
+            $aggregate = new ClassTokenAggregate($this->filename,$node->name->name);
+            $analyzer = new ClassAstAnalyzer($this->source_code, $aggregate);
+            $analyzer->do($node);
+            if ($aggregate->hasGenerics()){
+                $this->container->addClassTokens($this->filename,$analyzer->class_name,$aggregate);
+            }
         }
-        $analyzer = new ClassAstAnalyzer($this->source_code);
-        $class_tokens = $analyzer->do($node);
-        if ($class_tokens->hasGenerics()){
-            $this->container->classes[$analyzer->class_name] = $class_tokens;
+        if ($node instanceof \PhpParser\Node\Expr\ArrowFunction) {
+            $analyzer = new ArrowAstAnalyzer($this->source_code);
+            $tokens = $analyzer->do($node);
+            if ($tokens->hasTemplateInstance()) {
+                $this->container->instantiations[] = $tokens;
+            }
         }
-
         return null;
     }
 }

@@ -7,14 +7,16 @@ namespace Generics\Internal;
  */
 class Container
 {
+    public array $files_classes = [];
     /**
-     * @var array<TokenAggregate> $classes
+     * @var array<ClassTokenAggregate> $class_tokens
      */
-    public array $classes = [];
-    public FileCache $cache;
+    public array $class_tokens = [];
+    public array $instantiations = [];
+    public FileReader $reader;
 
     public function __construct() {
-        $this->cache = new FileCache;
+        $this->reader = new FileReader;
     }
 
     /**
@@ -23,18 +25,25 @@ class Container
      */
     public function isClassTemplate(string $class_name): bool
     {
-        return isset($this->classes[$class_name])
-            && $this->classes[$class_name] instanceof TokenAggregate
-            && $this->classes[$class_name]->isTemplate()
+        return isset($this->class_tokens[$class_name])
+            && $this->class_tokens[$class_name] instanceof ClassTokenAggregate
+            && $this->class_tokens[$class_name]->isTemplate()
         ;
     }
 
     /**
      * @param string $class_name
-     * @return TokenAggregate|null
+     * @return ClassTokenAggregate|null
      */
-    public function getClassTokens(string $class_name): ?TokenAggregate
+    public function getClassTokens(string $class_name): ?ClassTokenAggregate
     {
-        return $this->classes[$class_name] ?? null;
+        return $this->class_tokens[$class_name] ?? null;
     }
+
+    public function addClassTokens(string $filename, string $class_name, ClassTokenAggregate $aggregate): void
+    {
+        $this->files_classes[$filename][] = $class_name;
+        $this->class_tokens[$class_name] = $aggregate;
+    }
+
 }

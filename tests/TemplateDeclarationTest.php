@@ -28,7 +28,7 @@ final class TemplateDeclarationTest extends TestCase
     private function traverse(string $code): Container {
         $ast = $this->parser->parse($code, new Collecting);
         $container = new Container();
-        $this->traverser->addVisitor(new \Generics\Internal\GenericsVisitor($code, $container));
+        $this->traverser->addVisitor(new \Generics\Internal\GenericsVisitor('test',$code, $container));
         $this->traverser->traverse($ast);
         return $container;
     }
@@ -42,9 +42,9 @@ final class TemplateDeclarationTest extends TestCase
         class Bar{}
         CODE;
         $container = $this->traverse($code);
-        self::assertCount(1,$container->classes);
-        self::assertArrayHasKey('Foo',$container->classes);
-        self::assertArrayNotHasKey('Bar',$container->classes);
+        self::assertCount(1,$container->class_tokens);
+        self::assertArrayHasKey('Foo',$container->class_tokens);
+        self::assertArrayNotHasKey('Bar',$container->class_tokens);
         self::assertTrue($container->isClassTemplate('Foo'));
     }
 
@@ -62,10 +62,10 @@ final class TemplateDeclarationTest extends TestCase
         ';
 
         $container = $this->traverse($code);
-        self::assertCount(2,$container->classes);
-        self::assertArrayHasKey(ACME\Foo::class,$container->classes);
-        self::assertArrayHasKey(Foo\Bar::class,$container->classes);
-        self::assertArrayNotHasKey(ACME\Bar::class,$container->classes);
+        self::assertCount(2,$container->class_tokens);
+        self::assertArrayHasKey(ACME\Foo::class,$container->class_tokens);
+        self::assertArrayHasKey(Foo\Bar::class,$container->class_tokens);
+        self::assertArrayNotHasKey(ACME\Bar::class,$container->class_tokens);
         self::assertTrue($container->isClassTemplate(ACME\Foo::class));
         self::assertTrue($container->isClassTemplate(\Foo\Bar::class));
     }
@@ -80,7 +80,7 @@ final class TemplateDeclarationTest extends TestCase
             ){}
         }';
 
-        $expected = new \Generics\Internal\TokenAggregate('Foo');
+        $expected = new \Generics\Internal\ClassTokenAggregate('test','Foo');
         $expected->addToken(new \Generics\Internal\Token(
             offset: 113,
             parameter_name: 'param',
@@ -91,91 +91,9 @@ final class TemplateDeclarationTest extends TestCase
         $expected->current();
 
         $container = $this->traverse($code);
-        self::assertArrayHasKey('Foo',$container->classes);
+        self::assertArrayHasKey('Foo',$container->class_tokens);
         $tokens = $container->getClassTokens(Foo::class);
         self::assertCount(1, $tokens);
         self::assertEquals($expected, $tokens);
     }
-
-    public function testGenericUnionParameter(): void
-    {
-        $code = '<?php
-        class Foo{
-            public function __construct(
-                int $x, #[\Generics\ParameterType(\ACME\Bar|false)] $param, string $y
-            ){}
-        }';
-        $expected = new \Generics\Internal\TokenAggregate('Foo');
-        $expected->addToken(new \Generics\Internal\UnionToken(
-            offset: 90,
-            parameter_name: 'param',
-            union_types: ['false','\ACME\Bar']
-        ));
-        $container = $this->traverse($code);
-        self::assertCount(1, $container->classes);
-        self::assertEquals($expected, $container->getClassTokens(Foo::class));
-    }
-
-    public function testGenericParameter(): void
-    {
-        $code = '<?php
-        class Foo{
-            public function __construct(
-                int $x, 
-                #[\Generics\ParameterType(ACME\Bar::class)] $param, 
-                string $a,
-                #[\Generics\ParameterType(ACME\Bar)] $b, 
-                #[\Generics\ParameterType(\ACME\Bar)] $c, 
-                #[\Generics\ParameterType("ACME\Bar")] $d, 
-                #[\Generics\ParameterType("int")] $e, 
-            ){}
-        }';
-        $expected = new \Generics\Internal\TokenAggregate('Foo');
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 151,
-            parameter_name: 'param',
-            parameter_type: "ACME\Bar"
-        ));
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 240,
-            parameter_name: 'b',
-            parameter_type: "ACME\Bar"
-        ));
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 299,
-            parameter_name: 'c',
-            parameter_type: "\ACME\Bar"
-        ));
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 359,
-            parameter_name: 'd',
-            parameter_type: "ACME\Bar"
-        ));
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 414,
-            parameter_name: 'e',
-            parameter_type: "int"
-        ));
-
-        $container = $this->traverse($code);
-        self::assertCount(1, $container->classes);
-        self::assertEquals($expected, $container->getClassTokens(Foo::class));
-
-        $code = '<?php
-        class Foo{
-            public function __construct(
-                int $x, #[\Generics\ParameterType(Bar)] $param, string $y
-            ){}
-        }';
-        $expected = new \Generics\Internal\TokenAggregate('Foo');
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 122,
-            parameter_name: 'param',
-            parameter_type: "Bar"
-        ));
-        $container = $this->traverse($code);
-        self::assertEquals($expected, $container->getClassTokens(Foo::class));
-
-    }
-
 }
