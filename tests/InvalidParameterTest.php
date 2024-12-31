@@ -83,4 +83,16 @@ final class InvalidParameterTest extends TestCase
         $this->traverse($code);
     }
 
+    public function testFinalTemplateClass(): void
+    {
+        $code = '<?php
+        #[\Generics\T]
+        final class Foo{
+            public function __construct(int $x, #[\Generics\ParameterType()] $param){}
+        }';
+        $this->expectException(\ParseError::class);
+        $this->expectExceptionMessage('A template class can not be final');
+        $this->traverse($code);
+    }
+
 }

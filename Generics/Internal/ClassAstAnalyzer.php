@@ -22,7 +22,7 @@ final class ClassAstAnalyzer
 
     public function __construct(
         private readonly string $source_code,
-        private readonly ClassTokenAggregate $aggregate
+        private readonly ParameterTokenAggregate $aggregate
     ){}
 
     /**

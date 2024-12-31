@@ -5,7 +5,7 @@ namespace Generics\Internal;
 /**
  * @internal
  */
-final class ClassTokenAggregate extends TokenAggregate
+final class ParameterTokenAggregate extends TokenAggregate
 {
     private bool $is_template = false;
 

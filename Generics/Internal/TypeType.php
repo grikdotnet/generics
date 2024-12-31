@@ -14,4 +14,6 @@ enum TypeType
     case Atomic;
     /** A composite type which is a combination of several types */
     case Union;
+    /** (#[Generics\T(Foo)] fn() => new TemplateClass($x))(); */
+    case Instance;
 }

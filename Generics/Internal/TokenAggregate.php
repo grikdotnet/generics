@@ -3,9 +3,12 @@
 namespace Generics\Internal;
 
 abstract class TokenAggregate implements \Iterator{
+    /**
+     * @var array<Token|NewInstanceToken>
+     */
     protected array $tokens = [];
 
-    private bool $sorted = false;
+    protected bool $sorted = false;
 
     public function addToken(Token $token): void
     {
@@ -13,6 +16,9 @@ abstract class TokenAggregate implements \Iterator{
         $this->sorted = false;
     }
 
+    /**
+     * @return array<Token|NewInstanceToken>
+     */
     public function getTokens(): array
     {
         $this->sorted || $this->sort();
@@ -33,9 +39,9 @@ abstract class TokenAggregate implements \Iterator{
 
     /**
      * Return the current element
-     * @return Token
+     * @return Token | NewInstanceToken
      */
-    public function current(): mixed
+    public function current(): Token | NewInstanceToken
     {
         $this->sorted || $this->sort();
         return \current($this->tokens);

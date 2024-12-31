@@ -80,7 +80,7 @@ final class TemplateDeclarationTest extends TestCase
             ){}
         }';
 
-        $expected = new \Generics\Internal\ClassTokenAggregate('test','Foo');
+        $expected = new \Generics\Internal\ParameterTokenAggregate('test','Foo');
         $expected->addToken(new \Generics\Internal\Token(
             offset: 113,
             parameter_name: 'param',

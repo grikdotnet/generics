@@ -40,7 +40,7 @@ final class GenericParameterDeclarationTest extends TestCase
                 int $x, #[\Generics\ParameterType(\ACME\Bar|false)] $param, string $y
             ){}
         }';
-        $expected = new \Generics\Internal\ClassTokenAggregate('','Foo');
+        $expected = new \Generics\Internal\ParameterTokenAggregate('','Foo');
         $expected->addToken(new \Generics\Internal\UnionToken(
             offset: 90,
             parameter_name: 'param',
@@ -65,7 +65,7 @@ final class GenericParameterDeclarationTest extends TestCase
                 #[\Generics\ParameterType("int")] $e, 
             ){}
         }';
-        $expected = new \Generics\Internal\ClassTokenAggregate('','Foo');
+        $expected = new \Generics\Internal\ParameterTokenAggregate('','Foo');
         $expected->addToken(new \Generics\Internal\Token(
             offset: 151,
             parameter_name: 'param',
@@ -102,7 +102,7 @@ final class GenericParameterDeclarationTest extends TestCase
                 int $x, #[\Generics\ParameterType(Bar)] $param, string $y
             ){}
         }';
-        $expected = new \Generics\Internal\ClassTokenAggregate('','Foo');
+        $expected = new \Generics\Internal\ParameterTokenAggregate('','Foo');
         $expected->addToken(new \Generics\Internal\Token(
             offset: 122,
             parameter_name: 'param',
