@@ -29,7 +29,7 @@ As for now, the type must be defined in parentheses as "float".
 1. When enabled, an autoloader is added and a "generic" file wrapper is registered. 
 2. When a new class is instantiated, an autoload takes a path from the Composer, and reads the source. 
 3. The code with generics is parsed, creating tokens for wildcard and concrete parameters, and type instantiations.
- is a test for generation of tokens. 
+ is a test for generation of tokens. The tokens for a file can be cached. 
 For details please check the [TemplateDeclarationTest](https://github.com/grikdotnet/generics/blob/master/tests/TemplateDeclarationTest.php). 
 4. When parser meets an instantiation clause in an arrow function it replaces 
 a class name with a name of a concrete virtual class.

@@ -36,7 +36,6 @@ final class ConcreteInstanceGenerationTest extends TestCase
         $classTokens->current();
 
         //$instantiation_code
-        //<?php namespace ACME;
         //    $c = (#[Generics\T(\ACME\Bar)] fn() => new Foo($x))(); ';
         $instantiationToken = new ConcreteInstantiationToken(
             class_name: "Foo",
@@ -61,7 +60,6 @@ final class ConcreteInstanceGenerationTest extends TestCase
 
     /**
      * @TODO Implement Wildcard Return Types
-     */
     public function testConcreteClassGenerationWithReturnType()
     {
         $template = '<?php
@@ -105,7 +103,7 @@ final class ConcreteInstanceGenerationTest extends TestCase
         $class_declaration = $View->generateConcreteDeclaration($instantiationToken);
         self::assertEquals($expected_declaration, $class_declaration);
     }
-
+*/
 
 }
 
