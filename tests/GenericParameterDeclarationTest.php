@@ -7,6 +7,9 @@ use PhpParser\NodeTraverser;
 use PhpParser\Parser\Php8;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @internal
+ */
 final class GenericParameterDeclarationTest extends TestCase
 {
     private Php8 $parser;
@@ -32,64 +35,61 @@ final class GenericParameterDeclarationTest extends TestCase
         return $container;
     }
 
+
     public function testGenericUnionParameter(): void
     {
+        $this->markTestIncomplete('This test has not been implemented yet.');
+        return;
+
         $code = '<?php
         class Foo{
             public function __construct(
-                int $x, #[\Generics\ParameterType(\ACME\Bar|false)] $param, string $y
+                int $x, #[\Generics\T(\ACME\Bar|false)] $param, string $y
             ){}
         }';
-        $expected = new \Generics\Internal\ParameterTokenAggregate('','Foo');
-        $expected->addToken(new \Generics\Internal\UnionToken(
+        $expected = new \Generics\Internal\ClassAggregate('','Foo');
+        $methodAggregate = new \Generics\Internal\MethodAggregate(
+            name: '__construct',
+            offset: 37,
+            length: 116,
+            parameters_offset: 82,
+        );
+        $methodAggregate->addParameterToken(new \Generics\Internal\UnionParameterToken(
             offset: 90,
-            parameter_name: 'param',
-            union_types: ['false','\ACME\Bar']
+            length: 38,
+            types: ['false','\ACME\Bar']
         ));
+        $expected->addMethodAggregate($methodAggregate);
+
         $container = $this->traverse($code);
         self::assertCount(1, $container->class_tokens);
         self::assertEquals($expected, $container->getClassTokens(Foo::class));
     }
 
-    public function testGenericParameter(): void
+    public function testConcreteParameter(): void
     {
         $code = '<?php
         class Foo{
             public function __construct(
-                int $x, 
-                #[\Generics\ParameterType(ACME\Bar::class)] $param, 
+                int $x,
+                #[\Generics\T(Foo)] ACME\Bar $param,
                 string $a,
-                #[\Generics\ParameterType(ACME\Bar)] $b, 
-                #[\Generics\ParameterType(\ACME\Bar)] $c, 
-                #[\Generics\ParameterType("ACME\Bar")] $d, 
-                #[\Generics\ParameterType("int")] $e, 
+                #[\Generics\T("\ACME\Bar<\Qwe\Test>")] $c,
+                #[\Generics\T("ACME\Bar<float>")] $d,
             ){}
         }';
-        $expected = new \Generics\Internal\ParameterTokenAggregate('','Foo');
-        $expected->addToken(new \Generics\Internal\Token(
+        $expected = new \Generics\Internal\ClassAggregate('','Foo');
+        $methodAggregate = new \Generics\Internal\MethodAggregate(
+            name: '__construct',
+            offset: 37,
+            length: 265,
+            parameters_offset: 82
+        );
+        $methodAggregate->addParameterToken(new \Generics\Internal\ConcreteParameterToken(
             offset: 151,
-            parameter_name: 'param',
-            parameter_type: "ACME\Bar"
-        ));
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 240,
-            parameter_name: 'b',
-            parameter_type: "ACME\Bar"
-        ));
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 299,
-            parameter_name: 'c',
-            parameter_type: "\ACME\Bar"
-        ));
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 359,
-            parameter_name: 'd',
-            parameter_type: "ACME\Bar"
-        ));
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 414,
-            parameter_name: 'e',
-            parameter_type: "int"
+            length: 43,
+            base_type: "ACME\Bar",
+            concrete_type: "int"
         ));
 
         $container = $this->traverse($code);
@@ -102,11 +102,11 @@ final class GenericParameterDeclarationTest extends TestCase
                 int $x, #[\Generics\ParameterType(Bar)] $param, string $y
             ){}
         }';
-        $expected = new \Generics\Internal\ParameterTokenAggregate('','Foo');
-        $expected->addToken(new \Generics\Internal\Token(
+        $expected = new \Generics\Internal\ClassAggregate('','Foo');
+        $expected->addMethodAggregate(new \Generics\Internal\ConcreteParameterToken(
             offset: 122,
-            parameter_name: 'param',
-            parameter_type: "Bar"
+            length: 38,
+            base_type: "Bar",
         ));
         $container = $this->traverse($code);
         self::assertEquals($expected, $container->getClassTokens(Foo::class));

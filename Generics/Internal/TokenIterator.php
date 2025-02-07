@@ -2,22 +2,14 @@
 
 namespace Generics\Internal;
 
-abstract class TokenAggregate implements \Iterator{
-    /**
-     * @var array<Token|NewInstanceToken>
-     */
-    protected array $tokens = [];
+/**
+ * @internal
+ */
+trait TokenIterator {
 
     protected bool $sorted = false;
-
-    public function addToken(Token $token): void
-    {
-        $this->tokens[$token->offset] = $token;
-        $this->sorted = false;
-    }
-
     /**
-     * @return array<Token|NewInstanceToken>
+     * @return array<WildcardParameterToken|ConcreteInstantiationToken>
      */
     public function getTokens(): array
     {
@@ -29,7 +21,7 @@ abstract class TokenAggregate implements \Iterator{
      * Sort the tokens by the reverse position in a file
      * @return void
      */
-    private function sort(): void
+    public function sort(): void
     {
         if (!$this->sorted) {
             krsort($this->tokens, \SORT_NUMERIC);
@@ -37,13 +29,9 @@ abstract class TokenAggregate implements \Iterator{
         }
     }
 
-    /**
-     * Return the current element
-     * @return Token | NewInstanceToken
-     */
-    public function current(): Token | NewInstanceToken
+    public function current(): WildcardParameterToken | ConcreteInstantiationToken | MethodAggregate
     {
-        $this->sorted || $this->sort();
+        $this->sorted || static::sort();
         return \current($this->tokens);
     }
 
@@ -84,4 +72,5 @@ abstract class TokenAggregate implements \Iterator{
         $this->sorted || $this->sort();
         reset($this->tokens);
     }
+
 }

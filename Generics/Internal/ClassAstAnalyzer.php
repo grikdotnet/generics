@@ -9,6 +9,7 @@ use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Param;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt\ClassMethod;
 
 /**
  * @internal
@@ -22,7 +23,7 @@ final class ClassAstAnalyzer
 
     public function __construct(
         private readonly string $source_code,
-        private readonly ParameterTokenAggregate $aggregate
+        private readonly ClassAggregate $aggregate
     ){}
 
     /**
@@ -43,35 +44,63 @@ final class ClassAstAnalyzer
                 }
 
         $substitutions = [];
-        foreach ($node->getMethods() as $method)
+        foreach ($node->getMethods() as $method) {
+            $methodAggregate = null;
             foreach ($method->params as $param)
                 //find function parameters with a #[\Generics\T] attribute
                 foreach ($param->attrGroups as $attrGroup)
                     foreach ($attrGroup->attrs as $attr)
-                        switch ($attr->name->name) {
-                            case 'Generics\T':
+                        if  ($attr->name->name == 'Generics\T') {
+                            $methodAggregate ?? $methodAggregate = $this->makeMethodAggregate($method);
+                            if ($attr->args === []) {
+                                //this is a wildcard parameter
                                 if (!$this->aggregate->isTemplate()) {
                                     $message = 'A template parameter should not be used in a non-template class '
-                                        .$this->class_name.'::'.$method->name->name.'($'.$param->var->name.')'
-                                        .' line '.$attr->getLine();
+                                        . $this->class_name . '::' . $method->name->name . '($' . $param->var->name . ')'
+                                        . ' line ' . $attr->getLine();
                                     throw new \ParseError($message);
                                 }
-                                $token = $this->templateParameter($method->name->name, $param);
-                                $this->aggregate->addToken($token);
-                                break 3;
-                            case 'Generics\ParameterType':
-                                $token = $this->genericTypeParameter($method->name->name, $param, $attr);
-                                $this->aggregate->addToken($token);
-                                break 3;
+                                $token = $this->wildcardParameter($method->name->name, $param);
+                            } elseif($attr->args[0]->value instanceof BitwiseOr) {
+                                //this is a union type concrete parameter, i.e. Foo<int>|Bar
+                                $token = $this->makeUnionType($attr->args[0]->value, $param);
+                            } else {
+                                //this is a concrete generic type parameter, i.e. Foo<int>
+                                $token = $this->concreteParameter($method->name->name, $param, $attr);
+                            }
+                            $methodAggregate->addParameterToken($token);
+                            break 2;
                         }
+
+            if ($methodAggregate) {
+                $this->aggregate->addMethodAggregate($methodAggregate);
+            }
+        }
+    }
+
+    private function makeMethodAggregate(ClassMethod $classMethod): MethodAggregate
+    {
+        if ($classMethod->returnType) {
+            $header_end_position = $classMethod->returnType->getEndFilePos();
+        } else {
+            // there should be some parameters in a method to get parsed here
+            $e = end($classMethod->params)->getEndFilePos();
+            $header_end_position = strpos($this->source_code, ')',$e);
+        }
+        return new MethodAggregate(
+            name: $classMethod->name->name,
+            offset: $s = $classMethod->getStartFilePos(),
+            length: $header_end_position - $s +1,
+            parameters_offset: $classMethod->params[0]->getStartFilePos()
+        );
     }
 
     /**
      * @param string $method_name
      * @param Param $param
-     * @return Token
+     * @return WildcardParameterToken
      */
-    private function templateParameter(string $method_name, Param $param): Token
+    private function wildcardParameter(string $method_name, Param $param): WildcardParameterToken
     {
         $name = $param->var->name;
         if ($param->type !== null) {
@@ -79,59 +108,60 @@ final class ClassAstAnalyzer
                 .'('.$param->type->name .' $'.$name.') line '. $param->getLine();
             throw new \ParseError($message);
         }
-        $token = new Token(
-            offset: $param->getStartFilePos(),
-            parameter_name: $param->var->name,
-            parameter_type: null,
-            type_type: TypeType::Template
+        $token = new WildcardParameterToken(
+            offset: $s = $param->var->getStartFilePos(),
+            length: $param->var->getEndFilePos() - $s +1
         );
         return $token;
     }
 
-    /**
-     * @param string $method_name
-     * @param Param $param
-     * @param Attribute $attr
-     * @return Token
-     */
-    private function genericTypeParameter(string $method_name, Param $param, Attribute $attr): Token
+    private function concreteParameter(string $method_name, Param $param, Attribute $attr): ConcreteParameterToken
     {
-        if (!isset($attr->args[0])) {
-            throw new \ParseError ('Missing type of the generic parameter '.
-                $this->class_name.'::'.$method_name.'($'.$param->var->name.') on line '.$attr->getLine());
+        if ($attr->args === []) {
+            throw new \Exception('Something is wrong, concreteParameter() should not be called when an attribute does not have a parameter');
         }
-        if ($param->type !== null) {
-            $message = 'The generic parameter should have no type in '.$this->class_name.'::'.$method_name
-                .'('.$param->type->name .' $'.$param->var->name.') line '.$param->getLine();
-            throw new \ParseError($message);
-        }
-        $attributeParamExpr = $attr->args[0]->value;
 
+        $attributeParamExpr = $attr->args[0]->value;
         try{
-            if ($attributeParamExpr instanceof BitwiseOr) {
-                return $this->makeUnionType($attributeParamExpr, $param);
-            }
-            $param_type = $this->getSource($attributeParamExpr);
+            $attribute_parameter = $this->getSource($attributeParamExpr);
         }catch (\TypeError $E){
             throw new \ParseError (
                 'Invalid generic type ' . $attributeParamExpr->getType() . ' in '.
                 $this->class_name.'::'.$method_name.'($'.$param->var->name.') line '.$attr->getLine()
             );
         }
+        if (preg_match('/^ *((\\\\|\w)+) *<( *(\\\\|\w)+ *) *>/i',$attribute_parameter,$matches)) {
+            //syntax #[\Generics\T("Foo<Bar>")] $x is used
+            $concrete_type = $matches[3];
+            $generic_type = $matches[1];
+            if ($param->type && 0 !== strcasecmp($param->type->name,$generic_type)) {
+                throw new \ParseError (
+                    'A parameter type ' . $param->type->name . ' does not match the generic type '.
+                    $matches[1] .' in ' .
+                    $this->class_name.'::'.$method_name.'('.$param->type->name.' $'.$param->var->name.') on line '
+                    .$attr->getLine()
+                );
+            }
+        } elseif ($param->type) {
+            $generic_type = $param->type;
+            $concrete_type = $attribute_parameter;
+        } else
 
-        return new Token(
-            offset: $param->var->getStartFilePos(),
-            parameter_name: $param->var->name,
-            parameter_type: $param_type
-        );
+        $token = new ConcreteParameterToken(
+                offset: $s = $param->var->getStartFilePos(),
+                length: $param->var->getEndFilePos() - $s,
+                base_type: $matches[1],
+                concrete_type: $matches[2]
+            );
+        return $token;
     }
 
     /**
      * @param BitwiseOr $attributeParametersNode
      * @param Param $functionParameterNode
-     * @return UnionToken
+     * @return UnionParameterToken
      */
-    private function makeUnionType(BitwiseOr $attributeParametersNode, Param $functionParameterNode) : UnionToken
+    private function makeUnionType(BitwiseOr $attributeParametersNode, Param $functionParameterNode) : UnionParameterToken
     {
         $type_nodes = [];
         $node = $attributeParametersNode;
@@ -146,10 +176,10 @@ final class ClassAstAnalyzer
             break;
         }
 
-        return new UnionToken(
-            $functionParameterNode->getStartFilePos(),
-            $functionParameterNode->var->name,
-            $type_nodes
+        return new UnionParameterToken(
+            offset: $s = $functionParameterNode->getStartFilePos(),
+            length: $functionParameterNode->getEndFilePos() - $s +1,
+            types: $type_nodes
         );
     }
 

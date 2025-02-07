@@ -1,9 +1,11 @@
-<?php /** @noinspection PhpMissingParentConstructorInspection */
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace Generics\Internal;
 
-readonly class NewInstanceToken extends Token
+/**
+ * @internal
+ */
+readonly class ConcreteInstantiationToken
 {
     public TypeType $type_type;
     public function __construct(

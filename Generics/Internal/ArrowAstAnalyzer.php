@@ -1,15 +1,18 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Generics\Internal;
 
-class ArrowAstAnalyzer {
+/**
+ * @internal
+ */
+readonly class ArrowAstAnalyzer {
 
     /**
      * @param string $source_code
      */
     public function __construct(
-        private readonly string $source_code,
-        private readonly NewInstanceTokenAggregate $aggregate,
+        private string                         $source_code,
+        private ConcreteInstantiationAggregate $aggregate,
     ){
     }
 
@@ -50,7 +53,7 @@ class ArrowAstAnalyzer {
             $node->expr->class->getEndFilePos() - $s +1
         );
 
-        $token = new NewInstanceToken(
+        $token = new ConcreteInstantiationToken(
             class_name: $instance_class,
             offset: $node->expr->class->getStartFilePos(),
             parameter_type: $concrete_type

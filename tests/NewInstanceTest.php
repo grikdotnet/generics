@@ -39,14 +39,14 @@ final class NewInstanceTest extends TestCase
             (#[Generics\T(MyClass)] fn() => new \Acme\Bar($y))();
             (fn() => new SkipMe())();
             ';
-        $expected = new \Generics\Internal\NewInstanceTokenAggregate('test');
+        $expected = new \Generics\Internal\ConcreteInstantiationAggregate('test');
 
-        $expected->addToken(new \Generics\Internal\NewInstanceToken(
+        $expected->addToken(new \Generics\Internal\ConcreteInstantiationToken(
             class_name: "Acme\Foo",
             offset: 129,
             parameter_type: "int"
         ));
-        $expected->addToken(new \Generics\Internal\NewInstanceToken(
+        $expected->addToken(new \Generics\Internal\ConcreteInstantiationToken(
             class_name: "\Acme\Bar",
             offset: 194,
             parameter_type: "MyClass"
@@ -61,9 +61,9 @@ final class NewInstanceTest extends TestCase
     {
         $code = '<?php namespace ACME;
             $c = (#[Generics\T(\Acme\Bar)] fn() => new Foo($x))(); ';
-        $expected = new \Generics\Internal\NewInstanceTokenAggregate('test');
+        $expected = new \Generics\Internal\ConcreteInstantiationAggregate('test');
 
-        $expected->addToken(new \Generics\Internal\NewInstanceToken(
+        $expected->addToken(new \Generics\Internal\ConcreteInstantiationToken(
             class_name: "Foo",
             offset: 67,
             parameter_type: "\Acme\Bar"

@@ -81,7 +81,6 @@ final class Enable
             }
         }
         include 'T.php';
-        include 'ParameterType.php';
     }
 
 }

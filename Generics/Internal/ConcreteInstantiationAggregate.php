@@ -2,8 +2,12 @@
 
 namespace Generics\Internal;
 
-final class NewInstanceTokenAggregate extends TokenAggregate
+/**
+ * @internal
+ */
+final class ConcreteInstantiationAggregate implements \Iterator
 {
+    use TokenIterator;
     protected array $tokens = [];
 
     public function __construct(
@@ -14,7 +18,7 @@ final class NewInstanceTokenAggregate extends TokenAggregate
     {
         return (bool)$this->tokens;
     }
-    public function addToken(Token $token): void
+    public function addToken(ConcreteInstantiationToken $token): void
     {
         $this->tokens[$token->offset] = $token;
         $this->sorted = false;

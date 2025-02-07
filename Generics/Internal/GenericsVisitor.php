@@ -10,14 +10,14 @@ use PhpParser\NodeVisitorAbstract;
  */
 final class GenericsVisitor extends NodeVisitorAbstract {
 
-    private NewInstanceTokenAggregate $newInstanceAggregate;
+    private ConcreteInstantiationAggregate $newInstanceAggregate;
     
     public function __construct(
         private readonly string $filename,
         private readonly string $source_code,
         private readonly Container $container
     ) {
-        $this->newInstanceAggregate = new NewInstanceTokenAggregate($this->filename);
+        $this->newInstanceAggregate = new ConcreteInstantiationAggregate($this->filename);
     }
 
     /**
@@ -31,7 +31,7 @@ final class GenericsVisitor extends NodeVisitorAbstract {
     public function enterNode(Node $node): null
     {
         if ($node instanceof \PhpParser\Node\Stmt\Class_){
-            $tokenAggregate = new ParameterTokenAggregate($this->filename,$node->name->name);
+            $tokenAggregate = new ClassAggregate($this->filename,$node->name->name);
             $analyzer = new ClassAstAnalyzer($this->source_code, $tokenAggregate);
             $analyzer->do($node);
             if ($tokenAggregate->hasGenerics()){

@@ -80,12 +80,19 @@ final class TemplateDeclarationTest extends TestCase
             ){}
         }';
 
-        $expected = new \Generics\Internal\ParameterTokenAggregate('test','Foo');
-        $expected->addToken(new \Generics\Internal\Token(
-            offset: 113,
-            parameter_name: 'param',
-            parameter_type: null,
-            type_type: TypeType::Template,
+        $expected = new \Generics\Internal\ClassAggregate('test','Foo');
+        $expected->addMethodAggregate(
+            $methodAffrefate = new \Generics\Internal\MethodAggregate(
+                name: '__construct',
+                offset: 60,
+                length: 103,
+                parameters_offset: 105
+            )
+        );
+
+        $methodAffrefate->addParameterToken(new \Generics\Internal\WildcardParameterToken(
+            offset: 128,
+            length: 6
         ));
         $expected->setIsTemplate();
         $expected->current();
@@ -96,4 +103,5 @@ final class TemplateDeclarationTest extends TestCase
         self::assertCount(1, $tokens);
         self::assertEquals($expected, $tokens);
     }
+
 }

@@ -9,7 +9,7 @@ class Container
 {
     public array $files_classes = [];
     /**
-     * @var array<ParameterTokenAggregate> $class_tokens
+     * @var array<ClassAggregate> $class_tokens
      */
     public array $class_tokens = [];
     public array $instantiations = [];
@@ -26,27 +26,27 @@ class Container
     public function isClassTemplate(string $class_name): bool
     {
         return isset($this->class_tokens[$class_name])
-            && $this->class_tokens[$class_name] instanceof ParameterTokenAggregate
+            && $this->class_tokens[$class_name] instanceof ClassAggregate
             && $this->class_tokens[$class_name]->isTemplate()
         ;
     }
 
     /**
      * @param string $class_name
-     * @return ParameterTokenAggregate|null
+     * @return ClassAggregate|null
      */
-    public function getClassTokens(string $class_name): ?ParameterTokenAggregate
+    public function getClassTokens(string $class_name): ?ClassAggregate
     {
         return $this->class_tokens[$class_name] ?? null;
     }
 
-    public function addClassTokens(string $filename, string $class_name, ParameterTokenAggregate $aggregate): void
+    public function addClassTokens(string $filename, string $class_name, ClassAggregate $aggregate): void
     {
         $this->files_classes[$filename][] = $class_name;
         $this->class_tokens[$class_name] = $aggregate;
     }
 
-    public function addNewInstanceTokens(string $filename, NewInstanceTokenAggregate $newInstanceAggregate): void
+    public function addNewInstanceTokens(string $filename, ConcreteInstantiationAggregate $newInstanceAggregate): void
     {
         $this->instantiations[$filename] = $newInstanceAggregate;
     }
