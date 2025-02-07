@@ -4,6 +4,7 @@ namespace Generics;
 
 use Composer\Autoload\ClassLoader;
 use Generics\Internal\{Container, StreamWrapper};
+use http\Exception\RuntimeException;
 
 /**
  * @api
@@ -25,6 +26,9 @@ final class Enable
         self::$enabled = true;
         if (!$loader) {
             $loader = $this->getComposerLoader();
+        }
+        if (!$loader){
+            throw new RuntimeException("A Composer loader could not be found");
         }
 
         // avoid an infinite loop in autoloader
