@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 use Generics\Internal\Container;
+use Generics\Internal\Parameter;
 use Generics\Internal\TypeType;
 use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Lexer;
@@ -75,32 +76,30 @@ final class TemplateDeclarationTest extends TestCase
         $code = '<?php
         #[\Generics\T]
         class Foo{
+            #[\Generics\ReturnT]
             public function __construct(
-                int $x, #[\Generics\T] $param, string $y, $z
+                int &$x, #[\Generics\T] $param, ?\ACME\Bar $y=null, float ... $z
             ){}
         }';
 
         $expected = new \Generics\Internal\ClassAggregate('test','Foo');
+        $expected->setIsTemplate();
         $expected->addMethodAggregate(
-            $methodAffrefate = new \Generics\Internal\MethodAggregate(
-                name: '__construct',
+            $methodAggregate = new \Generics\Internal\MethodAggregate(
                 offset: 60,
-                length: 103,
-                parameters_offset: 105
+                length: 156,
+                name: '__construct',
             )
         );
-
-        $methodAffrefate->addParameterToken(new \Generics\Internal\WildcardParameterToken(
-            offset: 128,
-            length: 6
-        ));
-        $expected->setIsTemplate();
-        $expected->current();
+        $methodAggregate->setWildcardReturn();
+        $methodAggregate->addParameter(new Parameter(offset: 138, length:7,  name: 'x', type:'int &'));
+        $methodAggregate->addParameter(new Parameter(offset: 162, length:6, name: 'param', is_wildcard: true));
+        $methodAggregate->addParameter(new Parameter(offset: 170, length:13, name: 'y', type:'?\ACME\Bar'));
+        $methodAggregate->addParameter(new Parameter(offset: 190, length:12, name: 'z', type:'float ...'));
 
         $container = $this->traverse($code);
         self::assertArrayHasKey('Foo',$container->class_tokens);
         $tokens = $container->getClassTokens(Foo::class);
-        self::assertCount(1, $tokens);
         self::assertEquals($expected, $tokens);
     }
 

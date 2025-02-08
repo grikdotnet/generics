@@ -13,7 +13,6 @@ class MethodAggregate {
      * @param string $name
      * @param int $offset
      * @param int $length
-     * @param int $parameters_offset
      */
     public function __construct(
         public readonly int $offset,
@@ -21,13 +20,28 @@ class MethodAggregate {
         public readonly string $name
     ){}
 
+    /**
+     * @param Parameter $parameter
+     * @return void
+     */
     public function addParameter(Parameter $parameter): void
     {
         $this->parameters[] = $parameter;
     }
 
+    /**
+     * @return void
+     */
     public function setWildcardReturn(): void
     {
         $this->wildcardReturn = true;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isGeneric(): bool
+    {
+        return $this->wildcardReturn || array_reduce($this->parameters, fn($c, $p) => $c || $p->is_wildcard || $p->is_concrete_type);
     }
 }

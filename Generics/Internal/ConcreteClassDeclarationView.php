@@ -4,6 +4,9 @@ namespace Generics\Internal;
 
 readonly class ConcreteClassDeclarationView {
 
+    const L_ARROW = '‹',
+        R_ARROW = '›',
+        NS = '⧵';
     public function __construct(
         private ClassAggregate $class,
         private string         $source
@@ -17,9 +20,9 @@ readonly class ConcreteClassDeclarationView {
     public function generateConcreteDeclaration(ConcreteInstantiationToken $concrete): string
     {
         $base_class = $this->class->classname;
-        $converted_type = str_replace('\\','⧵',$concrete->parameter_type);
+        $type = str_replace('\\',self::NS,$concrete->parameter_type);
 
-        $code = "class $base_class".'‹'.$converted_type.'› extends '.$base_class.'{';
+        $code = "class $base_class".self::L_ARROW.$type.self::R_ARROW.' extends '.$base_class.'{';
         foreach ($this->class->getTokens() as $token) {
             if ($token instanceof MethodAggregate) {
                 $code .= $this->generateMethod($token, $concrete->parameter_type);
@@ -36,12 +39,17 @@ readonly class ConcreteClassDeclarationView {
         foreach ($method->parameters as $parameter) {
             if ($parameter->type === '') {
                 if ($parameter->is_wildcard){
-                    $typed_parameters[] = $concrete_param_type. ' $'.$parameter->name;
+                    $typed_parameters[] = $concrete_param_type.' $'.$parameter->name;
                 } else {
                     $typed_parameters[] = '$'.$parameter->name;
                 }
             } else {
-                $typed_parameters[] = $parameter->type . ' $'.$parameter->name;
+                if ($parameter->concrete_type === '') {
+                    $typed_parameters[] = $parameter->type.' $'.$parameter->name;
+                } else {
+                    $type = $parameter->type.self::L_ARROW.$parameter->concrete_type.self::R_ARROW;
+                    $typed_parameters[] = str_replace('\\',self::NS,$type).' $'.$parameter->name;
+                }
             }
             $parameters[] = '$'.$parameter->name;
         }

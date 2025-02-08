@@ -23,7 +23,7 @@ final class ClassAstAnalyzer
 
     public function __construct(
         private readonly string $source_code,
-        private readonly ClassAggregate $aggregate
+        private readonly ClassAggregate $class
     ){}
 
     /**
@@ -39,41 +39,56 @@ final class ClassAstAnalyzer
         foreach ($node->attrGroups as $group)
             foreach ($group->attrs as $attr)
                 if (0 === strcasecmp($attr->name->name, 'Generics\T')) {
-                    $this->aggregate->setIsTemplate();
+                    $this->class->setIsTemplate();
                     break 2;
                 }
 
         $substitutions = [];
         foreach ($node->getMethods() as $method) {
-            $methodAggregate = null;
-            foreach ($method->params as $param)
-                //find function parameters with a #[\Generics\T] attribute
+            $methodAggregate = $this->makeMethodAggregate($method);
+            $is_generic = false;
+            foreach ($method->attrGroups as $attrGroup) {
+                foreach ($attrGroup->attrs as $methodAttribute)
+                    if ($methodAttribute->name->name === 'Generics\ReturnT'){
+                        $methodAggregate->setWildcardReturn();
+                        $is_generic = true;
+                    }
+            }
+
+            foreach ($method->params as $param) {
+                //find parameters with a #[\Generics\T] attribute
                 foreach ($param->attrGroups as $attrGroup)
                     foreach ($attrGroup->attrs as $attr)
-                        if  ($attr->name->name == 'Generics\T') {
-                            $methodAggregate ?? $methodAggregate = $this->makeMethodAggregate($method);
+                        if ($attr->name->name == 'Generics\T') {
                             if ($attr->args === []) {
-                                //this is a wildcard parameter
-                                if (!$this->aggregate->isTemplate()) {
+                                if (!$this->class->isTemplate()) {
                                     $message = 'A template parameter should not be used in a non-template class '
                                         . $this->class_name . '::' . $method->name->name . '($' . $param->var->name . ')'
                                         . ' line ' . $attr->getLine();
                                     throw new \ParseError($message);
                                 }
                                 $token = $this->wildcardParameter($method->name->name, $param);
-                            } elseif($attr->args[0]->value instanceof BitwiseOr) {
-                                //this is a union type concrete parameter, i.e. Foo<int>|Bar
-                                $token = $this->makeUnionType($attr->args[0]->value, $param);
                             } else {
                                 //this is a concrete generic type parameter, i.e. Foo<int>
                                 $token = $this->concreteParameter($method->name->name, $param, $attr);
                             }
-                            $methodAggregate->addParameterToken($token);
-                            break 2;
+                            $methodAggregate->addParameter($token);
+                            $is_generic = true;
+                            continue 3;
                         }
+                $methodAggregate->addParameter(new Parameter(
+                    offset: $s = $param->getStartFilePos(),
+                    length: $param->var->getEndFilePos() - $s +1,
+                    name: $param->var->name,
+                    //type will include variadic and reference modifiers
+                    type: ($s === $param->var->getStartFilePos())
+                        ? ''
+                        : trim(substr($this->source_code,$s,$param->var->getStartFilePos()-$s))
+                ));
+            }
 
-            if ($methodAggregate) {
-                $this->aggregate->addMethodAggregate($methodAggregate);
+            if ($is_generic) {
+                $this->class->addMethodAggregate($methodAggregate);
             }
         }
     }
@@ -85,22 +100,21 @@ final class ClassAstAnalyzer
         } else {
             // there should be some parameters in a method to get parsed here
             $e = end($classMethod->params)->getEndFilePos();
-            $header_end_position = strpos($this->source_code, ')',$e);
+            $header_end_position = strpos($this->source_code, ')',$e)+1;
         }
         return new MethodAggregate(
-            name: $classMethod->name->name,
             offset: $s = $classMethod->getStartFilePos(),
-            length: $header_end_position - $s +1,
-            parameters_offset: $classMethod->params[0]->getStartFilePos()
+            length: $header_end_position - $s,
+            name: $classMethod->name->name,
         );
     }
 
     /**
      * @param string $method_name
      * @param Param $param
-     * @return WildcardParameterToken
+     * @return Parameter
      */
-    private function wildcardParameter(string $method_name, Param $param): WildcardParameterToken
+    private function wildcardParameter(string $method_name, Param $param): Parameter
     {
         $name = $param->var->name;
         if ($param->type !== null) {
@@ -108,17 +122,28 @@ final class ClassAstAnalyzer
                 .'('.$param->type->name .' $'.$name.') line '. $param->getLine();
             throw new \ParseError($message);
         }
-        $token = new WildcardParameterToken(
+        $parameter = new Parameter(
             offset: $s = $param->var->getStartFilePos(),
-            length: $param->var->getEndFilePos() - $s +1
+            length: $param->var->getEndFilePos() - $s +1,
+            name: $name,
+            type: '',
+            is_wildcard: true
         );
-        return $token;
+        return $parameter;
     }
 
-    private function concreteParameter(string $method_name, Param $param, Attribute $attr): ConcreteParameterToken
+    /**
+     * @param string $method_name
+     * @param Param $param
+     * @param Attribute $attr
+     * @return Parameter
+     * @throws \ParseError
+     * @throws \RuntimeException
+     */
+    private function concreteParameter(string $method_name, Param $param, Attribute $attr): Parameter
     {
         if ($attr->args === []) {
-            throw new \Exception('Something is wrong, concreteParameter() should not be called when an attribute does not have a parameter');
+            throw new \RuntimeException('Something is wrong, concreteParameter() should not be called when an attribute does not have a parameter');
         }
 
         $attributeParamExpr = $attr->args[0]->value;
@@ -130,7 +155,7 @@ final class ClassAstAnalyzer
                 $this->class_name.'::'.$method_name.'($'.$param->var->name.') line '.$attr->getLine()
             );
         }
-        if (preg_match('/^ *((\\\\|\w)+) *<( *(\\\\|\w)+ *) *>/i',$attribute_parameter,$matches)) {
+        if (preg_match('/^\s*((\\\\|\S)+)\s*<(\s*(\\\\|\S)+\s*) *>/i',$attribute_parameter,$matches)) {
             //syntax #[\Generics\T("Foo<Bar>")] $x is used
             $concrete_type = $matches[3];
             $generic_type = $matches[1];
@@ -147,10 +172,11 @@ final class ClassAstAnalyzer
             $concrete_type = $attribute_parameter;
         } else
 
-        $token = new ConcreteParameterToken(
+        $token = new Parameter(
                 offset: $s = $param->var->getStartFilePos(),
                 length: $param->var->getEndFilePos() - $s,
-                base_type: $matches[1],
+                name: $param->type->name,
+                type: $matches[1],
                 concrete_type: $matches[2]
             );
         return $token;
