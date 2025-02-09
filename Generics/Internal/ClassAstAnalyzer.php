@@ -143,7 +143,7 @@ final class ClassAstAnalyzer
     private function concreteParameter(string $method_name, Param $param, Attribute $attr): Parameter
     {
         if ($attr->args === []) {
-            throw new \RuntimeException('Something is wrong, concreteParameter() should not be called when an attribute does not have a parameter');
+            throw new \RuntimeException('concreteParameter() should not be called for an attribute without a parameter');
         }
 
         $attributeParamExpr = $attr->args[0]->value;
@@ -168,16 +168,21 @@ final class ClassAstAnalyzer
                 );
             }
         } elseif ($param->type) {
-            $generic_type = $param->type;
+            $generic_type = $param->type->name;
             $concrete_type = $attribute_parameter;
-        } else
+        } else {
+            throw new \ParseError('A non-generic parameter type ('.$attribute_parameter.
+                ') should be declared explicitly for '.
+                $this->class_name.'::'.$method_name.'($'.$param->var->name.') line '.$attr->getLine())
+            ;
+        }
 
         $token = new Parameter(
-                offset: $s = $param->var->getStartFilePos(),
-                length: $param->var->getEndFilePos() - $s,
-                name: $param->type->name,
-                type: $matches[1],
-                concrete_type: $matches[2]
+                offset: $s = $param->getStartFilePos(),
+                length: $param->getEndFilePos() - $s +1,
+                name: $param->var->name,
+                type: $generic_type,
+                concrete_type: $concrete_type
             );
         return $token;
     }

@@ -35,37 +35,6 @@ final class GenericParameterDeclarationTest extends TestCase
         return $container;
     }
 
-
-    public function testGenericUnionParameter(): void
-    {
-        $this->markTestIncomplete('This test has not been implemented yet.');
-        return;
-
-        $code = '<?php
-        class Foo{
-            public function __construct(
-                int $x, #[\Generics\T(\ACME\Bar|false)] $param, string $y
-            ){}
-        }';
-        $expected = new \Generics\Internal\ClassAggregate('','Foo');
-        $methodAggregate = new \Generics\Internal\MethodAggregate(
-            name: '__construct',
-            offset: 37,
-            length: 116,
-            parameters_offset: 82,
-        );
-        $methodAggregate->addParameterToken(new \Generics\Internal\UnionParameterToken(
-            offset: 90,
-            length: 38,
-            types: ['false','\ACME\Bar']
-        ));
-        $expected->addMethodAggregate($methodAggregate);
-
-        $container = $this->traverse($code);
-        self::assertCount(1, $container->class_tokens);
-        self::assertEquals($expected, $container->getClassTokens(Foo::class));
-    }
-
     public function testConcreteParameter(): void
     {
         $code = '<?php
@@ -73,41 +42,29 @@ final class GenericParameterDeclarationTest extends TestCase
             public function __construct(
                 int $x,
                 #[\Generics\T(Foo)] ACME\Bar $param,
-                string $a,
-                #[\Generics\T("\ACME\Bar<\Qwe\Test>")] $c,
-                #[\Generics\T("ACME\Bar<float>")] $d,
+                #[\Generics\T("\ACME\Bar<\Qwe\Test>")] $y,
             ){}
         }';
         $expected = new \Generics\Internal\ClassAggregate('','Foo');
-        $methodAggregate = new \Generics\Internal\MethodAggregate(
-            name: '__construct',
-            offset: 37,
-            length: 265,
-            parameters_offset: 82
+        $expected->addMethodAggregate(
+            $methodAggregate = new \Generics\Internal\MethodAggregate(offset: 37,length: 178,name: '__construct',)
         );
-        $methodAggregate->addParameterToken(new \Generics\Internal\ConcreteParameterToken(
-            offset: 151,
-            length: 43,
-            base_type: "ACME\Bar",
-            concrete_type: "int"
+        $methodAggregate->addParameter(new \Generics\Internal\Parameter(offset: 82, length: 6, name: 'x', type: "int"));
+        $methodAggregate->addParameter(new \Generics\Internal\Parameter(
+            offset: 106,
+            length: 35,
+            name: 'param',
+            type: "ACME\Bar",
+            concrete_type: "Foo"
+        ));
+        $methodAggregate->addParameter(new \Generics\Internal\Parameter(
+            offset: 159,
+            length: 41,
+            name: 'y',
+            type: "\ACME\Bar",
+            concrete_type: "\Qwe\Test"
         ));
 
-        $container = $this->traverse($code);
-        self::assertCount(1, $container->class_tokens);
-        self::assertEquals($expected, $container->getClassTokens(Foo::class));
-
-        $code = '<?php
-        class Foo{
-            public function __construct(
-                int $x, #[\Generics\ParameterType(Bar)] $param, string $y
-            ){}
-        }';
-        $expected = new \Generics\Internal\ClassAggregate('','Foo');
-        $expected->addMethodAggregate(new \Generics\Internal\ConcreteParameterToken(
-            offset: 122,
-            length: 38,
-            base_type: "Bar",
-        ));
         $container = $this->traverse($code);
         self::assertEquals($expected, $container->getClassTokens(Foo::class));
 
