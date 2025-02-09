@@ -40,7 +40,7 @@ final class ConcreteInstanceGenerationTest extends TestCase
         $instantiationToken = new ConcreteInstantiationToken(
             class_name: "Foo",
             offset: 67,
-            parameter_type: "\ACME\Bar"
+            concrete_type: "\ACME\Bar"
         );
 
         $expected_declaration = 'class Foo‹⧵ACME⧵Bar› extends Foo{'.

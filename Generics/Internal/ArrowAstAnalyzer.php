@@ -56,7 +56,7 @@ readonly class ArrowAstAnalyzer {
         $token = new ConcreteInstantiationToken(
             class_name: $instance_class,
             offset: $node->expr->class->getStartFilePos(),
-            parameter_type: $concrete_type
+            concrete_type: $concrete_type
         );
 
         $this->aggregate->addToken($token);

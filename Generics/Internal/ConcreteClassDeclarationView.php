@@ -20,12 +20,12 @@ readonly class ConcreteClassDeclarationView {
     public function generateConcreteDeclaration(ConcreteInstantiationToken $concrete): string
     {
         $base_class = $this->class->classname;
-        $type = str_replace('\\',self::NS,$concrete->parameter_type);
+        $type = str_replace('\\',self::NS,$concrete->concrete_type);
 
         $code = "class $base_class".self::L_ARROW.$type.self::R_ARROW.' extends '.$base_class.'{';
         foreach ($this->class->getTokens() as $token) {
             if ($token instanceof MethodAggregate) {
-                $code .= $this->generateMethod($token, $concrete->parameter_type);
+                $code .= $this->generateMethod($token, $concrete->concrete_type);
             }
         }
         $code .= '}';

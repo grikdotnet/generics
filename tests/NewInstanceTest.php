@@ -44,12 +44,12 @@ final class NewInstanceTest extends TestCase
         $expected->addToken(new \Generics\Internal\ConcreteInstantiationToken(
             class_name: "Acme\Foo",
             offset: 129,
-            parameter_type: "int"
+            concrete_type: "int"
         ));
         $expected->addToken(new \Generics\Internal\ConcreteInstantiationToken(
             class_name: "\Acme\Bar",
             offset: 194,
-            parameter_type: "MyClass"
+            concrete_type: "MyClass"
         ));
 
         $container = $this->traverse($code);
@@ -57,7 +57,7 @@ final class NewInstanceTest extends TestCase
         self::assertEquals($expected, $container->instantiations['test']);
     }
 
-    public function testNamespacedInstance()
+    public function testNamespacedInstantiation()
     {
         $code = '<?php namespace ACME;
             $c = (#[Generics\T(\Acme\Bar)] fn() => new Foo($x))(); ';
@@ -65,13 +65,13 @@ final class NewInstanceTest extends TestCase
 
         $expected->addToken(new \Generics\Internal\ConcreteInstantiationToken(
             class_name: "Foo",
-            offset: 67,
-            parameter_type: "\Acme\Bar"
+            offset: 77,
+            concrete_type: "\Acme\Bar"
         ));
 
         $container = $this->traverse($code);
         self::assertArrayHasKey('test',$container->instantiations);
-        self::assertEquals($expected, $container->instantiations['test'][0]);
+        self::assertEquals($expected, $container->instantiations['test']);
     }
 
 }
