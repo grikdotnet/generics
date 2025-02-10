@@ -7,6 +7,7 @@ use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Lexer;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser\Php8;
+use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use PHPUnit\Framework\TestCase;
 
 final class NewInstanceTest extends TestCase
@@ -42,13 +43,15 @@ final class NewInstanceTest extends TestCase
         $expected = new \Generics\Internal\ConcreteInstantiationAggregate('test');
 
         $expected->addToken(new \Generics\Internal\ConcreteInstantiationToken(
-            class_name: "Acme\Foo",
             offset: 129,
+            length: 8,
+            class_name: "Acme\Foo",
             concrete_type: "int"
         ));
         $expected->addToken(new \Generics\Internal\ConcreteInstantiationToken(
-            class_name: "\Acme\Bar",
             offset: 194,
+            length: 9,
+            class_name: "\Acme\Bar",
             concrete_type: "MyClass"
         ));
 
@@ -57,6 +60,7 @@ final class NewInstanceTest extends TestCase
         self::assertEquals($expected, $container->instantiations['test']);
     }
 
+    #[WithoutErrorHandler]
     public function testNamespacedInstantiation()
     {
         $code = '<?php namespace ACME;
@@ -64,14 +68,34 @@ final class NewInstanceTest extends TestCase
         $expected = new \Generics\Internal\ConcreteInstantiationAggregate('test');
 
         $expected->addToken(new \Generics\Internal\ConcreteInstantiationToken(
-            class_name: "Foo",
             offset: 77,
+            length: 3,
+            class_name: "Foo",
             concrete_type: "\Acme\Bar"
         ));
 
         $container = $this->traverse($code);
         self::assertArrayHasKey('test',$container->instantiations);
         self::assertEquals($expected, $container->instantiations['test']);
+    }
+
+    #[WithoutErrorHandler]
+    public function testConcreteInstantiationSubstitution()
+    {
+        $code = ' $c = (#[Generics\T(\Acme\Bar)] fn() => new Foo($x))(); ';
+
+        $aggregate = new \Generics\Internal\ConcreteInstantiationAggregate('test');
+        $aggregate->addToken(new \Generics\Internal\ConcreteInstantiationToken(
+            offset: 44,
+            length: 3,
+            class_name: "Foo",
+            concrete_type: "\Acme\Bar",
+        ));
+
+        $expected = ' $c = (#[Generics\T(\Acme\Bar)] fn() => new Foo‹⧵Acme⧵Bar›($x))(); ';
+        $view = new \Generics\Internal\ConcreteInstantiationSubstitutionView($aggregate,$code);
+        $new_code = $view->substituteInstantiations();
+        self::assertEquals($expected, $new_code);
     }
 
 }

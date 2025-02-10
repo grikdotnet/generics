@@ -54,8 +54,9 @@ readonly class ArrowAstAnalyzer {
         );
 
         $token = new ConcreteInstantiationToken(
-            class_name: $instance_class,
             offset: $node->expr->class->getStartFilePos(),
+            length: strlen($instance_class),
+            class_name: $instance_class,
             concrete_type: $concrete_type
         );
 

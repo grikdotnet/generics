@@ -2,6 +2,9 @@
 
 namespace Generics\Internal;
 
+/**
+ * @internal
+ */
 readonly class ConcreteClassDeclarationView {
 
     const L_ARROW = '‹',

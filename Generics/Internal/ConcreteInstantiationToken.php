@@ -5,11 +5,12 @@ namespace Generics\Internal;
 /**
  * @internal
  */
-readonly class ConcreteInstantiationToken
+class ConcreteInstantiationToken extends Token
 {
     public function __construct(
-        public string  $class_name, // a class being instantiated
-        public int     $offset,
-        public ?string $concrete_type // a concrete type to replace the template with
+        public readonly int     $offset,
+        public readonly int     $length,
+        public readonly string  $class_name, // a class being instantiated
+        public readonly string  $concrete_type // a concrete type to replace the template with
     ) {}
 }
