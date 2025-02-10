@@ -39,6 +39,9 @@ final class ClassAstAnalyzer
         foreach ($node->attrGroups as $group)
             foreach ($group->attrs as $attr)
                 if (0 === strcasecmp($attr->name->name, 'Generics\T')) {
+                    if ($node->isFinal()) {
+                        throw new \ParseError('A template class can not be final: '.$node->name->name);
+                    }
                     $this->class->setIsTemplate();
                     break 2;
                 }
@@ -62,9 +65,9 @@ final class ClassAstAnalyzer
                         if ($attr->name->name == 'Generics\T') {
                             if ($attr->args === []) {
                                 if (!$this->class->isTemplate()) {
-                                    $message = 'A template parameter should not be used in a non-template class '
+                                    $message = 'Missing concrete type of the generic parameter '
                                         . $this->class_name . '::' . $method->name->name . '($' . $param->var->name . ')'
-                                        . ' line ' . $attr->getLine();
+                                        . ' on line ' . $attr->getLine();
                                     throw new \ParseError($message);
                                 }
                                 $token = $this->wildcardParameter($method->name->name, $param);
