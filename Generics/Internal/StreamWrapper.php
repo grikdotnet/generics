@@ -2,11 +2,6 @@
 
 namespace Generics\Internal;
 
-use Error;
-use PhpParser\ErrorHandler\Collecting;
-use PhpParser\Lexer;
-use PhpParser\NodeTraverser;
-use PhpParser\Parser\Php8;
 use UnexpectedValueException;
 
 /**
@@ -15,8 +10,7 @@ use UnexpectedValueException;
 final class StreamWrapper
 {
     private static Container $container;
-    private static Php8 $parser;
-    private ?string $file_content;
+    private VirtualFile $file;
     private int $position = 0;
     private string $path = '';
 
@@ -29,7 +23,6 @@ final class StreamWrapper
     ): void
     {
         self::$container = $container;
-        self::$parser = new Php8(new Lexer);
         stream_wrapper_register('generic', __CLASS__);
     }
 
@@ -38,26 +31,10 @@ final class StreamWrapper
         if (!str_starts_with($path, 'generic://')) {
             throw new UnexpectedValueException("Wrong usage for the Generics Stream Wrapper");
         }
-        $path = substr($path, 10);
-
-        $this->file_content = self::$container->reader->getFile($path);
-
-        if ($this->file_content === false) {
+        if (!isset(self::$container->vfiles[$path])){
             return false;
         }
-        $this->path = $path;
-        $this->position = 0;
-
-        $errorHandler = new Collecting;
-        try {
-            $ast = self::$parser->parse($this->file_content, $errorHandler);
-            $visitor = new GenericsVisitor($path, $this->file_content, self::$container);
-            $traverser = new NodeTraverser($visitor);
-            $traverser->traverse($ast);
-        }catch (Error $e) {
-            print_r($e);
-        }
-
+        $this->file = self::$container->vfiles[$path];
         return true;
     }
 
@@ -66,8 +43,7 @@ final class StreamWrapper
      */
     public function stream_close(): void
     {
-        self::$container->reader->clearFileCache($this->path);
-        unset($this->file_content);
+        unset($this->file);
     }
 
     /**
@@ -78,21 +54,21 @@ final class StreamWrapper
      */
     public function stream_read(int $count): string
     {
-        $ret = substr($this->file_content, $this->position, $count);
+        $ret = substr($this->file->content, $this->position, $count);
         $this->position += strlen($ret);
         return $ret;
     }
 
     public function stream_eof(): bool
     {
-        return $this->position >= strlen($this->file_content);
+        return $this->position >= strlen($this->file->content);
     }
 
     public function stream_stat(): array| false
     {
-        $stat = stat($this->path);
+        $stat = stat($this->file->reference_path);
         if (isset($stat['size'])) {
-            $stat['size'] = strlen($this->file_content);
+            $stat['size'] = strlen($this->file->content);
         }
         return $stat;
     }

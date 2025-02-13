@@ -102,8 +102,7 @@ final class ClassAstAnalyzer
             $header_end_position = $classMethod->returnType->getEndFilePos();
         } else {
             // there should be some parameters in a method to get parsed here
-            $e = end($classMethod->params)->getEndFilePos();
-            $header_end_position = strpos($this->source_code, ')',$e)+1;
+            $header_end_position = strpos($this->source_code, ')',$classMethod->name->getEndFilePos())+1;
         }
         return new MethodAggregate(
             offset: $s = $classMethod->getStartFilePos(),

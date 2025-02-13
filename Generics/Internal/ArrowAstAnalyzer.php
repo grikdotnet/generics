@@ -11,12 +11,11 @@ readonly class ArrowAstAnalyzer {
      * @param string $source_code
      */
     public function __construct(
-        private string                         $source_code,
-        private ConcreteInstantiationAggregate $aggregate,
+        private string $source_code
     ){
     }
 
-    public function do(\PhpParser\Node\Expr\ArrowFunction $node): void
+    public function do(\PhpParser\Node\Expr\ArrowFunction $node): ?ConcreteInstantiationToken
     {
         //check if class has #[\Generics\New] attribute
         foreach ($node->attrGroups as $group)
@@ -26,10 +25,10 @@ readonly class ArrowAstAnalyzer {
                     break 2;
                 }
         if (!($attribute ?? false)) {
-            return;
+            return null;
         }
         if (! $node->expr instanceof \PhpParser\Node\Expr\New_) {
-            return;
+            return null;
         }
 
         if (!isset($attribute->args[0])) {
@@ -53,13 +52,11 @@ readonly class ArrowAstAnalyzer {
             $node->expr->class->getEndFilePos() - $s +1
         );
 
-        $token = new ConcreteInstantiationToken(
+        return new ConcreteInstantiationToken(
             offset: $node->expr->class->getStartFilePos(),
             length: strlen($instance_class),
             class_name: $instance_class,
             concrete_type: $concrete_type
         );
-
-        $this->aggregate->addToken($token);
     }
 }

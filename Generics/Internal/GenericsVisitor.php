@@ -10,14 +10,18 @@ use PhpParser\NodeVisitorAbstract;
  */
 final class GenericsVisitor extends NodeVisitorAbstract {
 
-    private ConcreteInstantiationAggregate $newInstanceAggregate;
-    
+    public ConcreteInstantiationAggregate $instantiations;
+
+    /**
+     * @var array<ClassAggregate>
+     */
+    public array $classes = [];
+
     public function __construct(
         private readonly string $filename,
-        private readonly string $source_code,
-        private readonly Container $container
+        private readonly string $source_code
     ) {
-        $this->newInstanceAggregate = new ConcreteInstantiationAggregate($this->filename);
+        $this->instantiations = new ConcreteInstantiationAggregate($this->filename);
     }
 
     /**
@@ -35,21 +39,20 @@ final class GenericsVisitor extends NodeVisitorAbstract {
             $analyzer = new ClassAstAnalyzer($this->source_code, $tokenAggregate);
             $analyzer->do($node);
             if ($tokenAggregate->hasGenerics()){
-                $this->container->addClassTokens($this->filename,$analyzer->class_name,$tokenAggregate);
+                $this->classes[] = $tokenAggregate;
             }
         }
         if ($node instanceof \PhpParser\Node\Expr\ArrowFunction) {
-            $analyzer = new ArrowAstAnalyzer($this->source_code, $this->newInstanceAggregate);
-            $analyzer->do($node);
+            $analyzer = new ArrowAstAnalyzer($this->source_code);
+            if ($token = $analyzer->do($node)) {
+                $this->instantiations->addToken($token);
+            }
         }
         return null;
     }
 
-    public function afterTraverse(array $nodes): null
+    public function getConcreteInstantiationAggregate(): ConcreteInstantiationAggregate
     {
-        if ($this->newInstanceAggregate->hasTokens()){
-            $this->container->addNewInstanceTokens($this->filename, $this->newInstanceAggregate);
-        }
-        return null;
+        return $this->instantiations;
     }
 }

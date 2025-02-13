@@ -7,17 +7,26 @@ namespace Generics\Internal;
  */
 class Container
 {
+    /**
+     * @var array<string,string>
+     */
     public array $files_classes = [];
     /**
      * @var array<ClassAggregate> $class_tokens
      */
     public array $class_tokens = [];
+    /**
+     * @var array<string,ConcreteInstantiationAggregate>
+     */
     public array $instantiations = [];
-    public FileReader $reader;
-
-    public function __construct() {
-        $this->reader = new FileReader;
-    }
+    /**
+     * @var array<string,string>
+     */
+    public array $files;
+    /**
+     * @var array<string,VirtualFile>
+     */
+    public array $vfiles;
 
     /**
      * @param string $class_name
@@ -40,15 +49,15 @@ class Container
         return $this->class_tokens[$class_name] ?? null;
     }
 
-    public function addClassTokens(string $filename, string $class_name, ClassAggregate $aggregate): void
+    public function addClassTokens(ClassAggregate $class): void
     {
-        $this->files_classes[$filename][] = $class_name;
-        $this->class_tokens[$class_name] = $aggregate;
+        $this->files_classes[$class->filename][] = $class->classname;
+        $this->class_tokens[$class->classname] = $class;
     }
 
-    public function addNewInstanceTokens(string $filename, ConcreteInstantiationAggregate $newInstanceAggregate): void
+    public function addVirtualSourceCode(string $filename, string $content, string $reference_path): void
     {
-        $this->instantiations[$filename] = $newInstanceAggregate;
+        $this->vfiles[$filename] = new VirtualFile($filename,$content,$reference_path);
     }
 
 

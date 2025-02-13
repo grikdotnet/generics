@@ -2,6 +2,7 @@
 
 use Generics\Internal\Container;
 use Generics\Internal\FileReader;
+use Generics\Internal\GenericsVisitor;
 use Generics\Internal\TypeType;
 use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Lexer;
@@ -22,13 +23,14 @@ final class NewInstanceTest extends TestCase
         $this->traverser = new NodeTraverser;
     }
 
-    private function traverse(string $code): Container {
+    private function traverse(string $code): GenericsVisitor {
         $ast = $this->parser->parse($code, new Collecting);
         $file_cache = $this->createStub(FileReader::class);
         $container = new Container($file_cache);
-        $this->traverser->addVisitor(new \Generics\Internal\GenericsVisitor('test',$code, $container));
+        $visitor = new GenericsVisitor('test',$code, $container);
+        $this->traverser->addVisitor($visitor);
         $this->traverser->traverse($ast);
-        return $container;
+        return $visitor;
     }
 
     public function testNewInstances()
@@ -55,9 +57,8 @@ final class NewInstanceTest extends TestCase
             concrete_type: "MyClass"
         ));
 
-        $container = $this->traverse($code);
-        self::assertArrayHasKey('test',$container->instantiations);
-        self::assertEquals($expected, $container->instantiations['test']);
+        $visitor = $this->traverse($code);
+        self::assertEquals($expected, $visitor->instantiations);
     }
 
     #[WithoutErrorHandler]
@@ -74,9 +75,8 @@ final class NewInstanceTest extends TestCase
             concrete_type: "\Acme\Bar"
         ));
 
-        $container = $this->traverse($code);
-        self::assertArrayHasKey('test',$container->instantiations);
-        self::assertEquals($expected, $container->instantiations['test']);
+        $visitor = $this->traverse($code);
+        self::assertEquals($expected, $visitor->instantiations);
     }
 
     #[WithoutErrorHandler]
