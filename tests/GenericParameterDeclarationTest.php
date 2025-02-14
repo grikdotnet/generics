@@ -46,6 +46,7 @@ final class GenericParameterDeclarationTest extends TestCase
             ){}
         }';
         $expected = new \Generics\Internal\ClassAggregate('','Foo');
+        $expected->setClassname('Foo');
         $expected->addMethodAggregate(
             $methodAggregate = new \Generics\Internal\MethodAggregate(offset: 37,length: 178,name: '__construct',)
         );

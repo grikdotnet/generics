@@ -24,27 +24,10 @@ final class Enable
         }
         self::$enabled = true;
 
-        // avoid an infinite loop in autoloader
-//        $this->preloadInternals();
-
         $container = new Container();
 
         StreamWrapper::register($container);
         new Autoloader($container);
-    }
-
-    /**
-     * @return mixed
-     */
-    private function preloadInternals():void
-    {
-        foreach (new \DirectoryIterator(__DIR__ . '/Internal') as $file){
-            $filename = $file->getFilename();
-            if(!$file->isDot() && !class_exists('\Generics\_internal\\'.substr($file->getFilename(),0,4),false)) {
-                include __DIR__ . '/Internal/' .$filename;
-            }
-        }
-        include 'T.php';
     }
 
     public static function enabled(): bool

@@ -33,7 +33,7 @@ final class ClassAstAnalyzer
     public function do(\PhpParser\Node\Stmt\Class_ $node): void
     {
         $this->class_name = isset($node->namespacedName) ? $node->namespacedName->name : $node->name->name;
-
+        $this->class->setClassname($this->class_name);
 
         //check if class has #[\Generics\T] attribute
         foreach ($node->attrGroups as $group)

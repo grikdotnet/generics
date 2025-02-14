@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 use Generics\Internal\Container;
+use Generics\Internal\GenericsVisitor;
 use Generics\Internal\Parameter;
 use Generics\Internal\TypeType;
 use PhpParser\ErrorHandler\Collecting;
@@ -26,12 +27,13 @@ final class TemplateDeclarationTest extends TestCase
         unset($this->traverser);
     }
 
-    private function traverse(string $code): Container {
+    private function traverse(string $code): GenericsVisitor {
         $ast = $this->parser->parse($code, new Collecting);
         $container = new Container();
-        $this->traverser->addVisitor(new \Generics\Internal\GenericsVisitor('test',$code, $container));
+        $visitor = new GenericsVisitor('test',$code);
+        $this->traverser->addVisitor($visitor);
         $this->traverser->traverse($ast);
-        return $container;
+        return $visitor;
     }
 
     public function testEmptyClassesDeclaration(): void
@@ -42,11 +44,10 @@ final class TemplateDeclarationTest extends TestCase
         class Foo{}
         class Bar{}
         CODE;
-        $container = $this->traverse($code);
-        self::assertCount(1,$container->class_tokens);
-        self::assertArrayHasKey('Foo',$container->class_tokens);
-        self::assertArrayNotHasKey('Bar',$container->class_tokens);
-        self::assertTrue($container->isClassTemplate('Foo'));
+        $visitor = $this->traverse($code);
+        self::assertCount(1,$visitor->classes);
+        self::assertEquals('Foo',$visitor->classes[0]->classname);
+        self::assertTrue($visitor->classes[0]->isTemplate());
     }
 
     public function testNamespacedTemplateDeclaration(): void
@@ -62,13 +63,12 @@ final class TemplateDeclarationTest extends TestCase
         class Bar{}
         ';
 
-        $container = $this->traverse($code);
-        self::assertCount(2,$container->class_tokens);
-        self::assertArrayHasKey(ACME\Foo::class,$container->class_tokens);
-        self::assertArrayHasKey(Foo\Bar::class,$container->class_tokens);
-        self::assertArrayNotHasKey(ACME\Bar::class,$container->class_tokens);
-        self::assertTrue($container->isClassTemplate(ACME\Foo::class));
-        self::assertTrue($container->isClassTemplate(\Foo\Bar::class));
+        $visitor = $this->traverse($code);
+        self::assertCount(2,$visitor->classes);
+        self::assertEquals(ACME\Foo::class,$visitor->classes[0]->classname);
+        self::assertEquals(Foo\Bar::class,$visitor->classes[1]->classname);
+        self::assertTrue($visitor->classes[0]->isTemplate());
+        self::assertTrue($visitor->classes[1]->isTemplate());
     }
 
     public function testTemplateParameter(): void
@@ -80,9 +80,11 @@ final class TemplateDeclarationTest extends TestCase
             public function __construct(
                 int &$x, #[\Generics\T] $param, ?\ACME\Bar $y=null, float ... $z
             ){}
+            private function bar(){} 
         }';
 
-        $expected = new \Generics\Internal\ClassAggregate('test','Foo');
+        $expected = new \Generics\Internal\ClassAggregate('test');
+        $expected->setClassname('Foo');
         $expected->setIsTemplate();
         $expected->addMethodAggregate(
             $methodAggregate = new \Generics\Internal\MethodAggregate(
@@ -97,10 +99,9 @@ final class TemplateDeclarationTest extends TestCase
         $methodAggregate->addParameter(new Parameter(offset: 170, length:13, name: 'y', type:'?\ACME\Bar'));
         $methodAggregate->addParameter(new Parameter(offset: 190, length:12, name: 'z', type:'float ...'));
 
-        $container = $this->traverse($code);
-        self::assertArrayHasKey('Foo',$container->class_tokens);
-        $tokens = $container->getClassTokens(Foo::class);
-        self::assertEquals($expected, $tokens);
+        $visitor = $this->traverse($code);
+        self::assertEquals('Foo',$visitor->classes[0]->classname);
+        self::assertEquals($expected, $visitor->classes[0]);
     }
 
 }

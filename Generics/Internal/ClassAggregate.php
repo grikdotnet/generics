@@ -15,10 +15,15 @@ final class ClassAggregate implements \Iterator
 
     private bool $is_template = false;
 
+    public readonly string $classname;
+
     public function __construct(
         public readonly string $filename,
-        public readonly string $classname
-    ){
+    ){}
+
+    public function setClassname(string $classname): void
+    {
+        $this->classname = $classname;
     }
 
     public function addMethodAggregate(MethodAggregate $method): void

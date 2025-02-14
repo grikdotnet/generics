@@ -35,7 +35,7 @@ final class GenericsVisitor extends NodeVisitorAbstract {
     public function enterNode(Node $node): null
     {
         if ($node instanceof \PhpParser\Node\Stmt\Class_){
-            $tokenAggregate = new ClassAggregate($this->filename,$node->name->name);
+            $tokenAggregate = new ClassAggregate($this->filename);
             $analyzer = new ClassAstAnalyzer($this->source_code, $tokenAggregate);
             $analyzer->do($node);
             if ($tokenAggregate->hasGenerics()){
