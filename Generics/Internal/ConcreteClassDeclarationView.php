@@ -15,11 +15,12 @@ readonly class ConcreteClassDeclarationView {
         private string         $source
     ){}
 
-    /**
-     *
-     * @param ConcreteInstantiationToken $concrete
-     * @return string
-     */
+    public function generateConcreteClassName(ConcreteInstantiationToken $concrete): string
+    {
+        $type = str_replace('\\',self::NS,$concrete->concrete_type);
+        return $this->class->classname.self::L_ARROW.$type.self::R_ARROW;
+    }
+
     public function generateConcreteDeclaration(ConcreteInstantiationToken $concrete): string
     {
         $base_class = $this->class->classname;
@@ -32,7 +33,7 @@ readonly class ConcreteClassDeclarationView {
             }
         }
         $code .= '}';
-        return $code = $this->strip($code);
+        return $code = '<?php '.$this->strip($code);
     }
 
     private function generateMethod(MethodAggregate $method, string $concrete_param_type): string
@@ -90,6 +91,4 @@ readonly class ConcreteClassDeclarationView {
         // Remove extra whitespace (optional, for further minification)
         return preg_replace('/\s+/', ' ', $stripped);
     }
-
-
 }

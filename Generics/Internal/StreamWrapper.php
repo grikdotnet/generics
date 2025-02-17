@@ -12,7 +12,8 @@ final class StreamWrapper
     private static Container $container;
     private VirtualFile $file;
     private int $position = 0;
-    private string $path = '';
+
+    public $context;
 
     /**
      * @param Container $container
@@ -26,16 +27,19 @@ final class StreamWrapper
         stream_wrapper_register('generic', __CLASS__);
     }
 
-    public function stream_open($path, ...$options): bool
+    public function stream_open(string $path, ...$options): bool
     {
         if (!str_starts_with($path, 'generic://')) {
             throw new UnexpectedValueException("Wrong usage for the Generics Stream Wrapper");
         }
-        if (!isset(self::$container->vfiles[$path])){
-            return false;
+        if (isset(self::$container->vfiles[$path])){
+            $this->file = self::$container->vfiles[$path];
+            return true;
+        } elseif (isset(self::$container->virtual_classes[$vclass = substr($path,10)])) {
+            $this->file = self::$container->virtual_classes[$vclass];
+            return true;
         }
-        $this->file = self::$container->vfiles[$path];
-        return true;
+        return false;
     }
 
     /**

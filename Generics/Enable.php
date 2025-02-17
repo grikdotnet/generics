@@ -12,6 +12,8 @@ final class Enable
 {
     private static bool $enabled = false;
 
+    public static Autoloader $loader;
+
     /**
      * Turns on processing og generics for PHP
      * @param ClassLoader|null $composer
@@ -27,12 +29,11 @@ final class Enable
         $container = new Container();
 
         StreamWrapper::register($container);
-        new Autoloader($container);
+        self::$loader = new Autoloader($container);
     }
 
     public static function enabled(): bool
     {
         return self::$enabled;
     }
-
 }

@@ -2,9 +2,9 @@
     "name": "grikdotnet/generics",
     "description": "Generics implementation in PHP",
     "type": "library",
-    "version": "0.1",
+    "version": "0.5",
     "require": {
-        "nikic/php-parser": "^5.2",
+        "nikic/php-parser": "^5.4",
         "php": ">=8.2",
         "ext-tokenizer": "*",
         "ext-ctype": "*",

@@ -1,9 +1,6 @@
 <?php declare(strict_types=1);
 
-use Generics\Internal\Container;
-use Generics\Internal\FileReader;
 use Generics\Internal\GenericsVisitor;
-use Generics\Internal\TypeType;
 use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Lexer;
 use PhpParser\NodeTraverser;
@@ -25,9 +22,7 @@ final class NewInstanceTest extends TestCase
 
     private function traverse(string $code): GenericsVisitor {
         $ast = $this->parser->parse($code, new Collecting);
-        $file_cache = $this->createStub(FileReader::class);
-        $container = new Container($file_cache);
-        $visitor = new GenericsVisitor('test',$code, $container);
+        $visitor = new GenericsVisitor('test',$code);
         $this->traverser->addVisitor($visitor);
         $this->traverser->traverse($ast);
         return $visitor;

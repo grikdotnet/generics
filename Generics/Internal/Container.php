@@ -27,6 +27,10 @@ class Container
      * @var array<string,VirtualFile>
      */
     public array $vfiles;
+    /**
+     * @var array<string,VirtualFile>
+     */
+    public array $virtual_classes;
 
     /**
      * @param string $class_name
@@ -55,10 +59,19 @@ class Container
         $this->class_tokens[$class->classname] = $class;
     }
 
-    public function addVirtualSourceCode(string $filename, string $content, string $reference_path): void
+
+    public function addVirtualFile(string $filename, string $content, string $reference_path): void
     {
         $this->vfiles[$filename] = new VirtualFile($filename,$content,$reference_path);
     }
 
+    public function addVirtualClassCode(string $class, VirtualFile $vFile): void
+    {
+        $this->virtual_classes[$class] = $vFile;
+    }
 
+    public function findClassFile(string $class_name): string|false
+    {
+        return array_search($class_name,$this->files_classes,true);
+    }
 }
