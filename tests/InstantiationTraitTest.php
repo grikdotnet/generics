@@ -1,8 +1,5 @@
 <?php declare(strict_types=1);
 
-use PhpParser\Lexer;
-use PhpParser\NodeTraverser;
-use PhpParser\Parser\Php8;
 use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use PHPUnit\Framework\TestCase;
 
@@ -18,9 +15,9 @@ class InstantiationTraitTest extends TestCase
     public function testConcreteInstantiationTrait()
     {
         $closure = Foo::new("int");
+        $this->assertInstanceOf(\Closure::class,$closure);
         $instance = $closure(42);
         $expected_class = 'Foo‹int›';
-        $this->assertInstanceOf(\Closure::class,$closure);
         $this->assertInstanceOf($expected_class,$instance);
         $this->assertEquals(42,$instance->x);
     }
@@ -28,10 +25,9 @@ class InstantiationTraitTest extends TestCase
     #[WithoutErrorHandler]
     public function testInvalidType()
     {
-        $closure = Foo::new("float");
-            $this->expectException(\Generics\TypeError::class);
-            $this->expectExceptionMessage('Foo‹float›::__construct: Argument #1 ($x) must be of type float, string given');
-            $closure('abc');
+        $this->expectException(\Generics\TypeError::class);
+        $this->expectExceptionMessage('Foo‹float›::__construct: Argument #1 ($x) must be of type float, string given');
+        Foo::new("float")('abc');
     }
 
 }
