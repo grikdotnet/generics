@@ -1,6 +1,11 @@
 # Generics in PHP
-A partial implementation of the generic programming in PHP.
-With no overhead in runtime checks of generic types. 
+A partial implementation of the generic programming in PHP. 
+ 
+Uses native PHP type system with no overhead in runtime checks for generic types.
+
+This is a working proof of concept without caching, please use for evaluation, not for production.
+
+To evaluate just clone the repo, and run `composer install`.
 
 ### Syntax
 First, call `new \Generics\Enable();` to initialise the package before the generic functionality is used.
@@ -41,12 +46,19 @@ Please check the [TemplateDeclarationTest](https://github.com/grikdotnet/generic
 3. `include()` cals a wrapper that serves the generated code for the virtual class.
 4. PHP creates an instance of a concrete virtual class and a Closure that calls a constructor with parameters provided.
 
+### Implemented
+* Parsing PHP code that contains generics in an autoloader.
+* Generation of a virtual class for a concrete type.
+* Altering the source code of the loaded classes. A concrete type defined in the attribute
+for a methods parameters is added to parameter declaration.
+* A stream wrapper to load virtual classes with include() that uses opcache.
+* The \Generics\TypeError exception with the correct error message and a backtrace.
+
 ### Can be implemented
-* Avoiding overhead completely by caching the generated concrete classes declaration in opcache, as well as results 
-of parsing of the template classes.
+* Caching the generated concrete classes in opcache, as well as results of parsing 
+of the template classes, and completely avoiding overhead in runtime.
 * Generic union types 
 * Generic types for property hooks in PHP 8.4
+* Generic return types
 * Partial support for the final wildcard classes
-
-### Could not find a solution for:
-* Autocompletion for the constructor parameters in IDEs when instantiating concrete types
+* Autocompletion for the generic parameters in PHPStorm with a Meta Storm plugin.
