@@ -29,7 +29,7 @@ Generics let us write a template class once, and define a concrete type when we 
 This allows ensuring the structure of the data, and skip endless checks for NULL and FALSE.
 
 ### Syntax
-First, call `new \Generics\Enable();` to initialise the code parer before the generic functionality is used.
+First, call `new \Generics\Enable();` before the generic functionality is used.
 
 Let's define a wildcard template declaration. Of course, it can be accompanied by the PHPDoc tags for static analysis.
 ```php
