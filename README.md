@@ -90,25 +90,31 @@ Tests [InstantiationTraitTest.php](tests/InstantiationTraitTest.php) and
 contain some runnable code.
 
 ### Why it is possible now
-* The problem with early implementations is that they slowed the code in runtime.
-* What changed: we have Opcache with inheritance cache in a standard installation now, and lots of memory in servers.
-We can use it to avoid performance penalty.
+1. Early implementations were slow.
+<br><br>
+What changed: we have Opcache with inheritance cache in a standard installation now, and lots of memory in servers.
+We can use it to avoid performance penalty.  
 
-* PHPStan and Psalm provide static analysis for generic types defined in comments. They assist a lot, but they don't 
+
+2. PHPStan and Psalm provide static analysis for generic types defined in comments. They assist a lot, but they don't 
 ensure type safety in runtime for the unexpected data.
-* What changed: PHP is a compiled language with strict types now. We can have type safety for arbitrary
+<br><br>
+What changed: PHP is a compiled language with strict types now. We can have type safety for arbitrary
 real-life data sets within an application itself, using native PHP functionality.
 This is different from validation of the code architecture with a stand-alone static analyser.
 
-* PHP does not allow symbols < and > as a part of class names, so the code `MyClass<Foo>` becomes
+
+3. PHP does not allow symbols < and > as a part of class names, so the code `MyClass<Foo>` becomes
 incompatible with PHP syntax.
-* What changed: we've got Attributes and First-class callables. According to the
+<br><br>
+What changed: we've got Attributes and First-class callables. According to the
 [PHP manual](https://www.php.net/manual/en/language.attributes.overview.php):
 > With attributes the generic implementation of a feature and its concrete use in an application can be decoupled.
 
-* It is quite difficult to implement generics for arrays and interfaces. Good engineers
+4. It is quite difficult to implement generics for arrays and interfaces. Good engineers
 hate incomplete solutions, and we are stuck.
-* The major use case for generics is collections of records from a database or an API.
+<br><br> 
+The major use case for generics is collections of records from a database or an API.
 Let's do this part, as it use to happen in PHP.
 
 ### How it works
