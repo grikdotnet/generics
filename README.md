@@ -5,7 +5,6 @@ For 15 years I watched people discussing generics in PHP.
 [Nikita Popov](https://github.com/PHPGenerics/php-generics-rfc/issues/45),
 [Anton Sukhachev](https://github.com/mrsuh/php-generics),
 and others were trying on and on.
-PHPStan and Psalm provide static code analysis for generics, and it works. 
 
 In 2023 PHP Foundation funded 
 [a year of research](https://thephp.foundation/blog/2024/08/19/state-of-generics-and-collections/) 
@@ -20,46 +19,66 @@ With this solution I hope to convince people that generics programming is actual
 And hope to see a partial implementation natively in PHP some day.
  
 ### Why do you need generics
-Data in databases, APIs, and other people code use to send unexpected data to our applications. 
-We can write checks manually, but it’s tedious and error-prone.
+Data obtained from databases, APIs, and other people code sometimes contain unexpected structure. 
+We write lots of checks, but it’s tedious and error-prone.
 For single-value variables we define types of parameters to ensure the data comes as expected. 
 Generics allow to define types for collections.
-Without generics, data sets are either arrays, allowing any type, or you need to define a separate class
-for every collection, making you write a heap of empty classes.
-Generics let us define collections.
+Without generics, data sets are either arrays, allowing any data, or you need to define a separate class
+with the same functionality for every set of records, so you have many empty classes.
+Generics let us write a template class once, and define a concrete type when we make an instance.
 This allows ensuring the structure of the data, and skip endless checks for NULL and FALSE.
 
 ### Syntax
-First, call `new \Generics\Enable();` to initialise the package before the generic functionality is used.
+First, call `new \Generics\Enable();` to initialise the code parer before the generic functionality is used.
 
 To use generic types one should define a wildcard template class and instantiate it with a concrete type.
 The wildcard and concrete types are defined with attributes.
 
-A wildcard template declaration example:
+Let's define a wildcard template declaration:
 ```php
 #[\Generics\T]
-class Foo{
+class Collection extends \ArrayObject{
     use \Generics\GenericTrait;
-    public function __construct(
-        int $x, #[\Generics\T] public $param
-    ){}
+    public function offsetSet( $key, #[\Generics\T] $value ){
+        parent::offsetSet($key,$value);
+    }
 }
 ```
 
 Create an instance of a concrete type:
 ```php
-$foo = Foo::new("int")(42);
+$collection = Collection::new("int")();
+$collection[] = 42;
 ```
-Check [InstantiationTraitTest.php](tests/InstantiationTraitTest.php) for the demo code.
 
-Define a concrete type as a parameter:
+We can use this collection with a concrete type as a parameter:
 ```php
 class Bar{
-    public function bar(#[\Generics\T("Foo<int>")] $param){}
+    public function multiply(#[\Generics\T("Collection<int>")] $integers): int 
+    {
+        $result = 0;
+        for ($integers as $value) {
+            $value *= 2;
+        }
+        return $result;
+    }
 }
 ```
+If we fill the collection with values from a database or an API data, and miss a check for
+a null, false, '' or an empty array, we can be sure a `multiply()` method will not silently result in 0.
 
-### What has changed
+The code
+```php
+$foo[] = null;
+```
+will trigger a TypeError exception with a proper error message and a trace, as PHP natively does.
+Now we can skip type checks of each element in a loop over a data set. 
+
+Tests [InstantiationTraitTest.php](tests/InstantiationTraitTest.php) and
+[InvalidParameterTest.php](tests/InvalidParameterTest.php)
+contain some runnable test code.
+
+### Why it is possible now
 * The problem with early implementations is that they slowed the code in runtime.
 * What changed: we have Opcache with inheritance cache in a standard installation now, and lots of memory in servers.
 We can use it to avoid performance penalty.

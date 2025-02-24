@@ -15,10 +15,21 @@ class TypeErrorTest extends TestCase{
     }
 
     #[WithoutErrorHandler]
-    #[DoesNotPerformAssertions]
     public function testGenericsTypeErrorTrace(){
+        $expected_message = 'B::foo: Argument #1 ($y) must be of type ACME\Foo, int given';
+        $expected_trace = [
+            'file' => __FILE__,
+            'line' => __LINE__+7,
+            'function' => 'foo',
+            'class' => 'B',
+            'type' => '->',
+        ];
         $object = new B;
+        try {
             $object->foo(1,2);
+        }catch (\TypeError $e){}
+        $this->assertEquals($expected_message, $e->getMessage());
+        $this->assertEquals($expected_trace, $e->getTrace()[0]);
     }
 }
 

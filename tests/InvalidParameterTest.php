@@ -5,6 +5,7 @@ use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Lexer;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser\Php8;
+use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use PHPUnit\Framework\TestCase;
 
 final class InvalidParameterTest extends TestCase
@@ -42,6 +43,7 @@ final class InvalidParameterTest extends TestCase
         $this->traverse($code);
     }
 
+    #[WithoutErrorHandler]
     public function testTemplateParameterInNonTemplateClass(): void
     {
         $code = '<?php
@@ -49,7 +51,7 @@ final class InvalidParameterTest extends TestCase
             public function __construct(int $x, #[\Generics\T] $param){}
         }';
         $this->expectException(\ParseError::class);
-        $this->expectExceptionMessage('A template parameter should not be used in a non-template class Foo::__construct($param) line 3');
+        $this->expectExceptionMessage('Missing concrete type of the generic parameter Foo::__construct($param) on line 3');
         $this->traverse($code);
     }
 
