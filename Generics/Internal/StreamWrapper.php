@@ -32,11 +32,9 @@ final class StreamWrapper
         if (!str_starts_with($path, 'generic://')) {
             throw new UnexpectedValueException("Wrong usage for the Generics Stream Wrapper");
         }
-        if (isset(self::$container->vfiles[$path])){
-            $this->file = self::$container->vfiles[$path];
+        if ($this->file = self::$container->getVirtualFile($path)){
             return true;
-        } elseif (isset(self::$container->virtual_classes[$vclass = substr($path,10)])) {
-            $this->file = self::$container->virtual_classes[$vclass];
+        } elseif ($this->file = self::$container->getVirtualClass(substr($path,10))) {
             return true;
         }
         return false;
@@ -58,6 +56,10 @@ final class StreamWrapper
      */
     public function stream_read(int $count): string
     {
+        if ($this->position === 0 && $count >= strlen($this->file->content)) {
+            $this->position = strlen($this->file->content);
+            return $this->file->content;
+        }
         $ret = substr($this->file->content, $this->position, $count);
         $this->position += strlen($ret);
         return $ret;
@@ -84,9 +86,9 @@ final class StreamWrapper
 
     /**
      * Include() calls it to set read buffer to 8192, ignoring
-     * @return bool
+     * @return true
      */
-    public function stream_set_option(): bool
+    public function stream_set_option(): true
     {
         return true;
     }

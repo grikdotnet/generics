@@ -3,6 +3,11 @@
 namespace Generics\Internal;
 
 class MethodAggregate {
+    const OFFSET = 10;
+    const LENGTH = 11;
+    const NAME = 12;
+    const PARAMETERS = 13;
+    const WILDCARD = 14;
     /**
      * @var array<Parameter>
      */
@@ -10,9 +15,9 @@ class MethodAggregate {
     public bool $wildcardReturn = false;
 
     /**
-     * @param string $name
      * @param int $offset
      * @param int $length
+     * @param string $name
      */
     public function __construct(
         public readonly int $offset,
@@ -37,11 +42,26 @@ class MethodAggregate {
         $this->wildcardReturn = true;
     }
 
-    /**
-     * @return bool
-     */
-    public function isGeneric(): bool
+    public function toArray(): array
     {
-        return $this->wildcardReturn || array_reduce($this->parameters, fn($c, $p) => $c || $p->is_wildcard || $p->is_concrete_type);
+        $p[self::OFFSET] = $this->offset;
+        $p[self::LENGTH] = $this->length;
+        $p[self::NAME] = $this->name;
+        $p[self::WILDCARD] = $this->wildcardReturn;
+        $p[self::PARAMETERS] = [];
+        foreach ($this->parameters as $param) {
+            $p[self::PARAMETERS][] = array_values((array)$param);
+        }
+        return $p;
+    }
+
+    static public function fromArray(array $data): self
+    {
+        $instance = new self($data[self::OFFSET],$data[self::LENGTH],$data[self::NAME]);
+        foreach ($data[self::PARAMETERS] as $p) {
+            $instance->parameters[] = new Parameter(...$p);
+        }
+        $instance->wildcardReturn = $data[self::WILDCARD];
+        return $instance;
     }
 }

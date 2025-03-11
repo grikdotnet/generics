@@ -8,8 +8,13 @@ namespace Generics\Internal;
 final class ClassAggregate implements \Iterator
 {
     use TokenIterator;
+
+    const FILENAME = 100;
+    const TOKENS = 101;
+    const IS_TEMPLATE = 102;
+    const CLASSNAME = 103;
     /**
-     * @var array<MethodAggregate> $methods
+     * @var array<int,MethodAggregate>
      */
     protected array $tokens = [];
 
@@ -32,15 +37,6 @@ final class ClassAggregate implements \Iterator
         $this->sorted = false;
     }
 
-    /**
-     * @TODO implement wildcard property tokens
-     */
-    public function addWildcardPropertyToken(WildcardPropertyToken $token): void
-    {
-        $this->tokens[$token->offset] = $token;
-        $this->sorted = false;
-    }
-
     public function setIsTemplate(): void
     {
         $this->is_template = true;
@@ -54,9 +50,6 @@ final class ClassAggregate implements \Iterator
     {
         if (!$this->sorted) {
             krsort($this->tokens, \SORT_NUMERIC);
-            foreach ($this->tokens as $token) {
-                $token instanceof Token && $token->sort();
-            }
             $this->sorted = true;
         }
     }
@@ -77,5 +70,30 @@ final class ClassAggregate implements \Iterator
     public function hasGenerics(): bool
     {
         return $this->is_template || $this->tokens !== [];
+    }
+
+    public function toArray(): array
+    {
+        $array = [
+            self::FILENAME => $this->filename,
+            self::IS_TEMPLATE => $this->is_template,
+            self::CLASSNAME => $this->classname,
+        ];
+        $array[self::TOKENS] = [];
+        foreach ($this->tokens as $t){
+            $array[self::TOKENS][$t->offset] = $t->toArray();
+        }
+        return $array;
+    }
+
+    static public function fromArray(array $data): self
+    {
+        $instance = new self($data[self::FILENAME]);
+        $instance->is_template = $data[self::IS_TEMPLATE];
+        $instance->classname = $data[self::CLASSNAME];
+        foreach ($data[self::TOKENS] as $k => $t) {
+            $instance->tokens[$k] = MethodAggregate::fromArray($t);
+        }
+        return $instance;
     }
 }

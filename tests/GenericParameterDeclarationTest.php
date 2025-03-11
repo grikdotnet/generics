@@ -30,7 +30,7 @@ final class GenericParameterDeclarationTest extends TestCase
     private function traverse(string $code): Container {
         $ast = $this->parser->parse($code, new Collecting);
         $container = new Container();
-        $this->traverser->addVisitor(new \Generics\Internal\GenericsVisitor('',$code, $container));
+        $this->traverser->addVisitor(new \Generics\Internal\GenericsVisitor('',$code));
         $this->traverser->traverse($ast);
         return $container;
     }
@@ -45,7 +45,7 @@ final class GenericParameterDeclarationTest extends TestCase
                 #[\Generics\T("\ACME\Bar<\Qwe\Test>")] $y,
             ){}
         }';
-        $expected = new \Generics\Internal\ClassAggregate('','Foo');
+        $expected = new \Generics\Internal\ClassAggregate('');
         $expected->setClassname('Foo');
         $expected->addMethodAggregate(
             $methodAggregate = new \Generics\Internal\MethodAggregate(offset: 37,length: 178,name: '__construct',)

@@ -8,4 +8,9 @@ readonly class VirtualFile {
         public string $content,
         public string $reference_path
     ){}
+
+    public function toArray(): array
+    {
+        return [$this->path,$this->content,$this->reference_path];
+    }
 }

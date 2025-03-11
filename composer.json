@@ -9,7 +9,8 @@
         "ext-tokenizer": "*",
         "ext-ctype": "*",
         "ext-mbstring":"*",
-        "composer-runtime-api": "*"
+        "composer-runtime-api": "*",
+        "ext-zend-opcache": "*"
     },
     "autoload": {
         "psr-4": {
@@ -25,6 +26,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require-dev": {
-        "phpunit/phpunit": "^11"
+        "phpunit/phpunit": "^12",
+        "guzzlehttp/guzzle": "^7.9"
     }
 }

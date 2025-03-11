@@ -1,0 +1,29 @@
+name: php-generics
+
+services:
+  test:
+    image: phpgenerics/test
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - type: bind
+        source: ../
+        target: /var/www/
+    ports:
+      - "8080:80"
+    configs:
+      - source: php.ini
+        target: /usr/local/etc/php/conf.d/opcache.ini
+      - source: php-fpm.conf
+        target: /usr/local/etc/php-fpm.conf
+      - source: nginx.conf
+        target: /etc/nginx/nginx.conf
+
+configs:
+  php.ini:
+    file: opcache.ini
+  php-fpm.conf:
+    file: php-fpm.conf
+  nginx.conf:
+    file: nginx.conf
