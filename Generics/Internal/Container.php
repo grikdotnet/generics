@@ -2,107 +2,147 @@
 
 namespace Generics\Internal;
 
+use Generics\Internal\tokens\ClassAggregate;
+use Generics\Internal\tokens\FileAggregate;
+
 /**
  * @internal
  */
 class Container
 {
-    const CLASS_TOKENS = 100;
-    const VFILES = 200;
-    const VCLASSES = 300;
+    public static self $instance;
     /**
-     * @var array<string,ClassAggregate> $class_tokens
+     * @var array<string,FileAggregate> $fileAggregates
      */
-    public array $class_tokens = [];
+    public array $fileAggregates = [];
     /**
-     * @var array<string,string>
+     * @var array<class-string,ClassAggregate> $classAggregates
      */
-    public array $files;
+    public array $classAggregates = [];
     /**
-     * @var array<string,VirtualFile>
+     * Contents of files with code to parse for tokens
+     * @var array<non-empty-string,string>
      */
-    public array $vfiles;
+    public array $files = [];
     /**
-     * @var array<string,VirtualFile>
+     * A virtual file is an augmented code from a real file with concrete types from attributes
+     * @var array<string,VirtualFile> $vfiles
      */
-    public array $virtual_classes;
+    public array $vfiles = [];
+    /**
+     *  A virtual class is a class with concrete types extending a template class
+     *  @var array<class-string,VirtualFile> $virtual_classes
+     */
+    public array $vclasses = [];
+    /**
+     * @var array<string>
+     */
+    public array $skip_files = [];
 
-    private array $cache = [self::CLASS_TOKENS=>[],self::VFILES=>[],self::VCLASSES=>[]];
+    /**
+     * Populated from OpCache, contains dehydrated tokens as numeric arrays
+     * @var array
+     */
+    private array $classes_tokens_cache = [];
 
-    private bool $is_modified = false;
+    /**
+     * Populated from OpCache, contains dehydrated tokens as numeric arrays
+     * @var array
+     */
+    private array $files_tokens_cache = [];
 
-    public function __construct()
+    /**
+     * A boolean mask marking which items were added to store in Opcache
+     * @var int
+     */
+    private int $modified = 0;
+
+    /**
+     * A singleton implementation
+     * @return self
+     */
+    public static function getInstance(): self
     {
-        if (Opcache::isAvailable()){
-            if ([] !== ($cache = Opcache::read()) ) {
-                $this->cache = $cache;
-            }
-            register_shutdown_function($this->saveToCache(...));
-        }
+        return self::$instance ?? self::$instance = new self();
     }
+    private function __construct()
+    {}
 
     /**
-     * @param string $class_name
+     * @param class-string $class_name
      * @return bool
      */
     public function isClassTemplate(string $class_name): bool
     {
         return ($classTokens = $this->getClassTokens($class_name))
-            && $classTokens instanceof ClassAggregate
             && $classTokens->isTemplate()
         ;
     }
 
     /**
-     * @param string $class_name
+     * @param class-string $class_name
      * @return ClassAggregate|null
      */
     public function getClassTokens(string $class_name): ?ClassAggregate
     {
-        if (isset($this->class_tokens[$class_name])) {
-            return $this->class_tokens[$class_name];
+        if (isset($this->classAggregates[$class_name])) {
+            return $this->classAggregates[$class_name];
         }
-        if (isset($this->cache[self::CLASS_TOKENS][$class_name])) {
-            return $this->class_tokens[$class_name] = ClassAggregate::fromArray($this->cache[self::CLASS_TOKENS][$class_name]);
+        if (isset($this->classes_tokens_cache[$class_name])) {
+            return $this->classAggregates[$class_name] = ClassAggregate::fromArray($this->classes_tokens_cache[$class_name]);
         }
         return null;
     }
 
-    public function addClassTokens(ClassAggregate $class): void
-    {
-        $this->class_tokens[$class->classname] = $class;
-        $this->is_modified = true;
-    }
-
-    public function addVirtualFile(string $filename, string $content, string $reference_path): void
-    {
-        $this->vfiles[$filename] = new VirtualFile($filename,$content,$reference_path);
-        $this->is_modified = true;
-    }
-
-    public function addVirtualClassCode(string $class, VirtualFile $vFile): void
-    {
-        $this->virtual_classes[$class] = $vFile;
-        $this->is_modified = true;
-    }
-
     /**
-     * @param string $classname
-     * @return VirtualFile | null
+     * @param string $path
+     * @return FileAggregate|null
      */
-    public function getVirtualClass(string $classname): ?VirtualFile
+    public function getFileTokens(string $path): ?FileAggregate
     {
-        if (isset($this->virtual_classes[$classname])) {
-            return $this->virtual_classes[$classname];
+        if (isset($this->fileAggregates[$path])) {
+            return $this->fileAggregates[$path];
         }
-        if (isset($this->cache[self::VCLASSES][$classname])){
-            return $this->virtual_classes[$classname] = new VirtualFile(...$this->cache[self::VCLASSES][$classname]);
+        if (isset($this->files_tokens_cache[$path])) {
+            return $this->fileAggregates[$path] = FileAggregate::fromArray($this->files_tokens_cache[$path]);
         }
         return null;
     }
 
     /**
-     * @param string $filename
+     * @param FileAggregate $fileAggregate
+     * @return void
+     */
+    public function addFileTokens(FileAggregate $fileAggregate): void
+    {
+        $this->fileAggregates[$fileAggregate->path] = $fileAggregate;
+        foreach ($fileAggregate->classAggregates as $c) {
+            $this->classAggregates[$c->classname] = $c;
+        }
+        $this->modified |= 1;
+    }
+
+    /**
+     * @param string $path
+     * @return void
+     */
+    public function addToSkipFiles(string $path): void
+    {
+        $this->skip_files[] = $path;
+        $this->modified |= 1;
+    }
+
+    /**
+     * @param VirtualFile $param
+     * @return void
+     */
+    public function addAugmentedFile(VirtualFile $param)
+    {
+        $this->vfiles[$param->path] = $param;
+    }
+
+    /**
+     * @param non-empty-string $filename
      * @return VirtualFile | null
      */
     public function getVirtualFile(string $filename): ?VirtualFile
@@ -110,27 +150,30 @@ class Container
         if (isset($this->vfiles[$filename])) {
             return $this->vfiles[$filename];
         }
-        if (isset($this->cache[self::VFILES][$filename])){
-            return $this->vfiles[$filename] = new VirtualFile(...$this->cache[self::VFILES][$filename]);
-        }
         return null;
     }
 
-    /**
-     * called on shutdown
-     */
-    private function saveToCache(): void
+    public function isModified(): bool
     {
-        if (!$this->is_modified) {
-            return;
-        }
-        $data = [
-            self::CLASS_TOKENS => array_map(fn ($c) => $c->toArray(), $this->class_tokens),
-            self::VFILES => array_map(fn ($f) => $f->toArray(), $this->vfiles),
-            self::VCLASSES => array_map(fn ($f) => $f->toArray(), $this->virtual_classes),
-            'timestamp' => time(),
-        ];
-        Opcache::write($data);
+        return $this->modified !== 0;
+    }
+    public function areNewTokens(): bool
+    {
+        return (bool)($this->modified & 1);
     }
 
+    /**
+     * Create a reference to opcache during initialization
+     *
+     * @param array $file_tokens
+     * @param array $class_tokens
+     * @param array $skip_files
+     * @return void
+     */
+    public function setCache(array $file_tokens, array $class_tokens, array $skip_files): void
+    {
+        $this->files_tokens_cache = $file_tokens;
+        $this->classes_tokens_cache = $class_tokens;
+        $this->skip_files = $skip_files;
+    }
 }

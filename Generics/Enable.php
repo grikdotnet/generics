@@ -3,16 +3,15 @@
 namespace Generics;
 
 use Composer\Autoload\ClassLoader;
-use Generics\Internal\{Autoloader, Container, StreamWrapper};
+use Generics\Internal\{Loader, Container};
 
 /**
+ * A wrapper to provide access from anywhere
  * @api
  */
 final class Enable
 {
     private static bool $enabled = false;
-
-    public static Autoloader $loader;
 
     /**
      * Turns on processing og generics for PHP
@@ -26,10 +25,10 @@ final class Enable
         }
         self::$enabled = true;
 
-        $container = new Container();
+        $container = Container::getInstance();
 
-        StreamWrapper::register($container);
-        self::$loader = new Autoloader($container);
+        $loader = new Loader($container);
+        Concrete::setLoader($loader);
     }
 
     public static function enabled(): bool

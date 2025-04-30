@@ -6,7 +6,7 @@ readonly class VirtualFile {
     public function __construct(
         public string $path,
         public string $content,
-        public string $reference_path
+        public ?string $reference_path = null
     ){}
 
     public function toArray(): array

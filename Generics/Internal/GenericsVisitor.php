@@ -2,26 +2,34 @@
 
 namespace Generics\Internal;
 
+use Generics\Internal\model\ArrowAstAnalyzer;
+use Generics\Internal\model\ClassAstAnalyzer;
+use Generics\Internal\tokens\ClassAggregate;
+use Generics\Internal\tokens\ConcreteInstantiationToken;
+use Generics\Internal\tokens\FileAggregate;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 
 /**
+ * an implementation of a Visitor pattern as designed in the Nikic Parser
  * @internal
  */
 final class GenericsVisitor extends NodeVisitorAbstract {
 
-    public ConcreteInstantiationAggregate $instantiations;
+    /**
+     * @var ConcreteInstantiationToken[]
+     */
+    private array $instantiations = [];
 
     /**
-     * @var array<ClassAggregate>
+     * @var ClassAggregate[]
      */
-    public array $classes = [];
+    private array $classes = [];
 
     public function __construct(
-        private readonly string $filename,
+        private readonly string $path,
         private readonly string $source_code
     ) {
-        $this->instantiations = new ConcreteInstantiationAggregate($this->filename);
     }
 
     /**
@@ -34,25 +42,23 @@ final class GenericsVisitor extends NodeVisitorAbstract {
      */
     public function enterNode(Node $node): null
     {
-        if ($node instanceof \PhpParser\Node\Stmt\Class_){
-            $tokenAggregate = new ClassAggregate($this->filename);
-            $analyzer = new ClassAstAnalyzer($this->source_code, $tokenAggregate);
-            $analyzer->do($node);
-            if ($tokenAggregate->hasGenerics()){
-                $this->classes[] = $tokenAggregate;
+        if ($node instanceof \PhpParser\Node\Stmt\Class_) {
+            $analyzer = new ClassAstAnalyzer($this->source_code);
+            $classAggregate = $analyzer->do($node);
+            if ($classAggregate->hasGenerics()) {
+                $this->classes[$classAggregate->classname] = $classAggregate;
             }
         }
         if ($node instanceof \PhpParser\Node\Expr\ArrowFunction) {
-            $analyzer = new ArrowAstAnalyzer($this->source_code);
-            if ($token = $analyzer->do($node)) {
-                $this->instantiations->addToken($token);
+            if ($token = ArrowAstAnalyzer::do($this->source_code,$node)) {
+                $this->instantiations[$token->offset] = $token;
             }
         }
         return null;
     }
 
-    public function getConcreteInstantiationAggregate(): ConcreteInstantiationAggregate
+    public function getFileTokens(): FileAggregate
     {
-        return $this->instantiations;
+        return new FileAggregate($this->path,$this->classes,$this->instantiations);
     }
 }

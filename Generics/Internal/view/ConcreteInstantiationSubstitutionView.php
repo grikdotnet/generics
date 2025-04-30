@@ -1,6 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal;
+namespace Generics\Internal\view;
+
+use Generics\Internal\tokens\ConcreteInstantiationAggregate;
 
 /**
  * @internal
@@ -21,7 +23,7 @@ class ConcreteInstantiationSubstitutionView {
         $previous_offset = null;
         foreach ($this->aggregate as $token) {
             $type = str_replace('\\',self::NS,$token->concrete_type);
-            $code = $token->class_name. self::L_ARROW . $type . self::R_ARROW .
+            $code = $token->type. self::L_ARROW . $type . self::R_ARROW .
                 substr($this->source,$token->offset+$token->length, $previous_offset) . $code;
             $previous_offset = $token->offset;
         }

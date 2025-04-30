@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal;
+namespace Generics\Internal\tokens;
 
 /**
  * @internal
@@ -29,7 +29,7 @@ trait TokenIterator {
         }
     }
 
-    public function current(): WildcardParameterToken | ConcreteInstantiationToken | MethodAggregate
+    public function current(): WildcardParameterToken | ConcreteInstantiationToken | MethodHeaderAggregate
     {
         $this->sorted || static::sort();
         return \current($this->tokens);

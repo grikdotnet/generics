@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-use Generics\Internal\ClassAggregate;
-use Generics\Internal\MethodAggregate;
-use Generics\Internal\ConcreteInstantiationToken;
+use Generics\Internal\tokens\ClassAggregate;
+use Generics\Internal\tokens\MethodHeaderAggregate;
+use Generics\Internal\tokens\ConcreteInstantiationToken;
 use PHPUnit\Framework\TestCase;
 
 final class ConcreteInstanceGenerationTest extends TestCase
@@ -17,44 +17,38 @@ final class ConcreteInstanceGenerationTest extends TestCase
                 int $x, #[\Generics\T] $param, string $y, $z
             ){}
         }';
-        $classTokens = new ClassAggregate('template');
-        $classTokens->setClassname('Foo');
-        $methodAggregate = new MethodAggregate(
+        $classTokens = new ClassAggregate('Foo');
+        $methodAggregate = new MethodHeaderAggregate(
             offset: 60,
             length: 103,
             name: '__construct',
+            headline: 'public function __construct(int $x, #[\Generics\T] $param, string $y, $z)'
         );
-        $methodAggregate->addParameter(new \Generics\Internal\Parameter
+        $methodAggregate->addParameter(new \Generics\Internal\tokens\Parameter
             (offset: 105,length: 6,name: 'x',type: 'int'));
-        $methodAggregate->addParameter(new \Generics\Internal\Parameter
+        $methodAggregate->addParameter(new \Generics\Internal\tokens\Parameter
             (offset: 113,length: 22,name: 'param',is_wildcard: true));
-        $methodAggregate->addParameter(new \Generics\Internal\Parameter
+        $methodAggregate->addParameter(new \Generics\Internal\tokens\Parameter
             (offset: 136,length: 9,name: 'y', type: 'string'));
-        $methodAggregate->addParameter(new \Generics\Internal\Parameter
+        $methodAggregate->addParameter(new \Generics\Internal\tokens\Parameter
             (offset: 147,length: 2,name: 'z'));
         $classTokens->addMethodAggregate($methodAggregate);
         $classTokens->setIsTemplate();
-        $classTokens->current();
 
         //$instantiation_code
         //    $c = (#[Generics\T(\ACME\Bar)] fn() => new Foo($x))(); ';
-        $instantiationToken = new ConcreteInstantiationToken(
-            offset: 0, //does not matter for this test
-            length: 3,
-            class_name: "Foo",
-            concrete_type: "\ACME\Bar"
-        );
+        $concrete_type = "\ACME\Bar";
 
         $expected_declaration = 'class Foo‹⧵ACME⧵Bar› extends Foo{'.
-            'public function __construct( int $x, #[\Generics\T] $param, string $y, $z ){'.
+            'public function __construct(int $x, #[\Generics\T] $param, string $y, $z){'.
                 'try{'.
                     'return (fn(int $x,\ACME\Bar $param,string $y,$z)=>parent::__construct(...func_get_args()))'.
                         '($x,$param,$y,$z);'.
                 '}catch(\TypeError $e){throw \Generics\TypeError::fromTypeError($e);}'.
             '}}';
 
-        $View = new \Generics\Internal\ConcreteClassDeclarationView($classTokens, $template);
-        $class_declaration = $View->generateConcreteDeclaration($instantiationToken);
+        $View = new \Generics\Internal\view\ConcreteView($classTokens);
+        $class_declaration = $View->generateConcreteDeclaration($concrete_type);
         self::assertEquals($expected_declaration, $class_declaration);
     }
 
@@ -106,4 +100,3 @@ final class ConcreteInstanceGenerationTest extends TestCase
 */
 
 }
-

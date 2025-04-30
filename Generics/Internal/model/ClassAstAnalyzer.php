@@ -1,7 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal;
+namespace Generics\Internal\model;
 
+use Generics\Internal\tokens\ClassAggregate;
+use Generics\Internal\tokens\MethodHeaderAggregate;
+use Generics\Internal\tokens\Parameter;
+use Generics\Internal\tokens\UnionParameterToken;
+use Generics\Internal\view\ConcreteView;
 use PhpParser\Node\Attribute;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\BinaryOp\BitwiseOr;
@@ -18,22 +23,23 @@ final class ClassAstAnalyzer
 {
     public readonly string $class_name;
 
+    private readonly ClassAggregate $class;
+
     private array $restricted_names = ['__halt_compiler'=>0,'abstract'=>0,'and'=>0,'array'=>0,'as'=>0,'break'=>0,'callable'=>0,'case'=>0,'catch'=>0,'class'=>0,'clone'=>0,'const'=>0,'continue'=>0,'declare'=>0,'default'=>0,'die'=>0,'do'=>0,'echo'=>0,'else'=>0,'elseif'=>0,'empty'=>0,'enddeclare'=>0,'endfor'=>0,'endforeach'=>0,'endif'=>0,'endswitch'=>0,'endwhile'=>0,'enum'=>0,'eval'=>0,'exit'=>0,'extends'=>0,'final'=>0,'finally'=>0,'for'=>0,'foreach'=>0,'fn'=>0,'function'=>0,'global'=>0,'goto'=>0,'if'=>0,'implements'=>0,'include'=>0,'include_once'=>0,'instanceof'=>0,'insteadof'=>0,'interface'=>0,'match'=>0,'isset'=>0,'list'=>0,'namespace'=>0,'never'=>0,'new'=>0,'object'=>0,'or'=>0,'print'=>0,'private'=>0,'protected'=>0,'public'=>0,'require'=>0,'require_once'=>0,'return'=>0,'switch'=>0,'throw'=>0,'trait'=>0,'try'=>0,'unset'=>0,'use'=>0,'var'=>0,'void'=>0,'while'=>0,'xor'=>0,'yield'=>0,'self'=>0,'parent'=>0,'static'=>0,'__class__'=>0,'__dir__'=>0,'__file__'=>0,'__function__'=>0,'__line__'=>0,'__method__'=>0,'__namespace__'=>0,'__trait__'=>0];
     private array $builtin = ['int','float','bool','true','false','null','string','array','callable'];
 
     public function __construct(
         private readonly string $source_code,
-        private readonly ClassAggregate $class
     ){}
 
     /**
      * @param \PhpParser\Node\Stmt\Class_ $node
      * @return void
      */
-    public function do(\PhpParser\Node\Stmt\Class_ $node): void
+    public function do(\PhpParser\Node\Stmt\Class_ $node): ClassAggregate
     {
         $this->class_name = isset($node->namespacedName) ? $node->namespacedName->name : $node->name->name;
-        $this->class->setClassname($this->class_name);
+        $class = new ClassAggregate($this->class_name);
 
         //check if class has #[\Generics\T] attribute
         foreach ($node->attrGroups as $group)
@@ -42,13 +48,15 @@ final class ClassAstAnalyzer
                     if ($node->isFinal()) {
                         throw new \ParseError('A template class can not be final: '.$node->name->name);
                     }
-                    $this->class->setIsTemplate();
+                    $class->setIsTemplate();
                     break 2;
                 }
 
         $substitutions = [];
         foreach ($node->getMethods() as $method) {
-            $methodAggregate = $this->makeMethodAggregate($method);
+            if (!($methodAggregate = $this->makeMethodAggregate($method))) {
+                continue;
+            }
             $is_generic = false;
             foreach ($method->attrGroups as $attrGroup) {
                 foreach ($attrGroup->attrs as $methodAttribute)
@@ -64,7 +72,7 @@ final class ClassAstAnalyzer
                     foreach ($attrGroup->attrs as $attr)
                         if ($attr->name->name == 'Generics\T') {
                             if ($attr->args === []) {
-                                if (!$this->class->isTemplate()) {
+                                if (!$class->isTemplate()) {
                                     $message = 'Missing concrete type of the generic parameter '
                                         . $this->class_name . '::' . $method->name->name . '($' . $param->var->name . ')'
                                         . ' on line ' . $attr->getLine();
@@ -91,23 +99,30 @@ final class ClassAstAnalyzer
             }
 
             if ($is_generic) {
-                $this->class->addMethodAggregate($methodAggregate);
+                $class->addMethodAggregate($methodAggregate);
             }
         }
+        return $class;
     }
 
-    private function makeMethodAggregate(ClassMethod $classMethod): MethodAggregate
+    private function makeMethodAggregate(ClassMethod $classMethod): MethodHeaderAggregate| false
     {
+        $s = $classMethod->getStartFilePos();
         if ($classMethod->returnType) {
-            $header_end_position = $classMethod->returnType->getEndFilePos();
+            $header_end_position = $classMethod->returnType->getEndFilePos()+1;
+            $headline = substr($this->source_code, $s, $header_end_position - $s);
+        } elseif ($classMethod->params !== []) {
+            $header_end_position = end($classMethod->params)->getEndFilePos()+1;
+            $headline = substr($this->source_code, $s, $header_end_position - $s).')';
         } else {
-            // there should be some parameters in a method to get parsed here
-            $header_end_position = strpos($this->source_code, ')',$classMethod->name->getEndFilePos())+1;
+            return false;
         }
-        return new MethodAggregate(
-            offset: $s = $classMethod->getStartFilePos(),
+        $headline = ConcreteView::strip($headline);
+        return new MethodHeaderAggregate(
+            offset: $s,
             length: $header_end_position - $s,
             name: $classMethod->name->name,
+            headline: $headline,
         );
     }
 
@@ -124,14 +139,13 @@ final class ClassAstAnalyzer
                 .'('.$param->type->name .' $'.$name.') line '. $param->getLine();
             throw new \ParseError($message);
         }
-        $parameter = new Parameter(
+        return new Parameter(
             offset: $s = $param->var->getStartFilePos(),
             length: $param->var->getEndFilePos() - $s +1,
             name: $name,
             type: '',
             is_wildcard: true
         );
-        return $parameter;
     }
 
     /**

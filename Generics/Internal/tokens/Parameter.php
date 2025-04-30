@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal;
+namespace Generics\Internal\tokens;
 
 class Parameter extends Token{
     public function __construct(

@@ -1,4 +1,7 @@
 <?php declare(strict_types=1);
+if (!class_exists(ParserTestBase::class, false)) {
+    include 'ParserTestBase.php';
+}
 
 use Generics\Internal\Container;
 use PhpParser\ErrorHandler\Collecting;
@@ -8,11 +11,8 @@ use PhpParser\Parser\Php8;
 use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use PHPUnit\Framework\TestCase;
 
-final class InvalidParameterTest extends TestCase
+final class InvalidParameterTest extends ParserTestBase
 {
-    private Php8 $parser;
-    private NodeTraverser $traverser;
-
     public function setUp(): void
     {
         $this->parser = new Php8(new Lexer);
@@ -23,14 +23,6 @@ final class InvalidParameterTest extends TestCase
     public function tearDown(): void
     {
         unset($this->traverser);
-    }
-
-    private function traverse(string $code): Container {
-        $ast = $this->parser->parse($code, new Collecting);
-        $container = new Container();
-        $this->traverser->addVisitor(new \Generics\Internal\GenericsVisitor('test',$code, $container));
-        $this->traverser->traverse($ast);
-        return $container;
     }
 
     public function testGenericParameterWithType(): void

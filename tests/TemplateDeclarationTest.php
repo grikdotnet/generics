@@ -1,41 +1,13 @@
 <?php declare(strict_types=1);
 
-use Generics\Internal\Container;
-use Generics\Internal\GenericsVisitor;
-use Generics\Internal\Parameter;
-use Generics\Internal\TypeType;
-use PhpParser\ErrorHandler\Collecting;
-use PhpParser\Lexer;
-use PhpParser\NodeTraverser;
-use PhpParser\Parser\Php8;
-use PHPUnit\Framework\TestCase;
+if (!class_exists(ParserTestBase::class, false)) {
+    include 'ParserTestBase.php';
+}
 
-final class TemplateDeclarationTest extends TestCase
+use Generics\Internal\tokens\Parameter;
+
+final class TemplateDeclarationTest extends ParserTestBase
 {
-    private Php8 $parser;
-    private NodeTraverser $traverser;
-
-    public function setUp(): void
-    {
-        $this->parser = new Php8(new Lexer);
-        $this->traverser = new NodeTraverser;
-        $this->traverser->addVisitor(new PhpParser\NodeVisitor\NameResolver);
-    }
-
-    public function tearDown(): void
-    {
-        unset($this->traverser);
-    }
-
-    private function traverse(string $code): GenericsVisitor {
-        $ast = $this->parser->parse($code, new Collecting);
-        $container = new Container();
-        $visitor = new GenericsVisitor('test',$code);
-        $this->traverser->addVisitor($visitor);
-        $this->traverser->traverse($ast);
-        return $visitor;
-    }
-
     public function testEmptyClassesDeclaration(): void
     {
         $code = <<<CODE
@@ -44,10 +16,10 @@ final class TemplateDeclarationTest extends TestCase
         class Foo{}
         class Bar{}
         CODE;
-        $visitor = $this->traverse($code);
-        self::assertCount(1,$visitor->classes);
-        self::assertEquals('Foo',$visitor->classes[0]->classname);
-        self::assertTrue($visitor->classes[0]->isTemplate());
+        $fileAggregate = $this->traverse($code);
+        self::assertCount(1,$fileAggregate->classAggregates);
+        self::assertEquals('Foo',$fileAggregate->classAggregates['Foo']->classname);
+        self::assertTrue($fileAggregate->classAggregates['Foo']->isTemplate());
     }
 
     public function testNamespacedTemplateDeclaration(): void
@@ -63,12 +35,12 @@ final class TemplateDeclarationTest extends TestCase
         class Bar{}
         ';
 
-        $visitor = $this->traverse($code);
-        self::assertCount(2,$visitor->classes);
-        self::assertEquals(ACME\Foo::class,$visitor->classes[0]->classname);
-        self::assertEquals(Foo\Bar::class,$visitor->classes[1]->classname);
-        self::assertTrue($visitor->classes[0]->isTemplate());
-        self::assertTrue($visitor->classes[1]->isTemplate());
+        $fileAggregate = $this->traverse($code);
+        self::assertCount(2,$fileAggregate->classAggregates);
+        self::assertEquals(ACME\Foo::class,$fileAggregate->classAggregates['ACME\Foo']->classname);
+        self::assertEquals(Foo\Bar::class,$fileAggregate->classAggregates['Foo\Bar']->classname);
+        self::assertTrue($fileAggregate->classAggregates['ACME\Foo']->isTemplate());
+        self::assertTrue($fileAggregate->classAggregates['Foo\Bar']->isTemplate());
     }
 
     public function testTemplateParameter(): void
@@ -83,14 +55,14 @@ final class TemplateDeclarationTest extends TestCase
             private function bar(){} 
         }';
 
-        $expected = new \Generics\Internal\ClassAggregate('test');
-        $expected->setClassname('Foo');
+        $expected = new \Generics\Internal\tokens\ClassAggregate('Foo');
         $expected->setIsTemplate();
         $expected->addMethodAggregate(
-            $methodAggregate = new \Generics\Internal\MethodAggregate(
+            $methodAggregate = new \Generics\Internal\tokens\MethodHeaderAggregate(
                 offset: 60,
-                length: 156,
+                length: 142,
                 name: '__construct',
+                headline: '#[\Generics\ReturnT] public function __construct( int &$x, #[\Generics\T] $param, ?\ACME\Bar $y=null, float ... $z)'
             )
         );
         $methodAggregate->setWildcardReturn();
@@ -99,9 +71,38 @@ final class TemplateDeclarationTest extends TestCase
         $methodAggregate->addParameter(new Parameter(offset: 170, length:13, name: 'y', type:'?\ACME\Bar'));
         $methodAggregate->addParameter(new Parameter(offset: 190, length:12, name: 'z', type:'float ...'));
 
-        $visitor = $this->traverse($code);
-        self::assertEquals('Foo',$visitor->classes[0]->classname);
-        self::assertEquals($expected, $visitor->classes[0]);
+        $fileAggregate = $this->traverse($code);
+        self::assertEquals('Foo',$fileAggregate->classAggregates['Foo']->classname);
+        self::assertEquals($expected, $fileAggregate->classAggregates['Foo']);
     }
 
+    public function testTemplateWithReturnType(): void
+    {
+        $code = '<?php
+        #[\Generics\T]
+        class Foo{
+            #[\Generics\ReturnT]
+            public function foo(
+                #[\Generics\T] $param
+            ): int{}
+            private function bar(){} 
+        }';
+
+        $expected = new \Generics\Internal\tokens\ClassAggregate('Foo');
+        $expected->setIsTemplate();
+        $expected->addMethodAggregate(
+            $methodAggregate = new \Generics\Internal\tokens\MethodHeaderAggregate(
+                offset: 60,
+                length: 110,
+                name: 'foo',
+                headline: '#[\Generics\ReturnT] public function foo( #[\Generics\T] $param ): int'
+            )
+        );
+        $methodAggregate->setWildcardReturn();
+        $methodAggregate->addParameter(new Parameter(offset: 145, length:6, name: 'param', is_wildcard: true));
+
+        $fileAggregate = $this->traverse($code);
+        self::assertEquals('Foo',$fileAggregate->classAggregates['Foo']->classname);
+        self::assertEquals($expected, $fileAggregate->classAggregates['Foo']);
+    }
 }

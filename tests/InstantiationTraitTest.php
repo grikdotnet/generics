@@ -1,20 +1,21 @@
 <?php declare(strict_types=1);
 
+use Composer\Autoload\ClassLoader;
 use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use PHPUnit\Framework\TestCase;
 
 class InstantiationTraitTest extends TestCase
 {
-    public function __construct(string $name)
+    public function setUp(): void
     {
-        parent::__construct($name);
+        $composer = current(ClassLoader::getRegisteredLoaders());
+        $composer->addClassMap([Foo::class=>__FILE__]);
         new \Generics\Enable();
     }
-
     #[WithoutErrorHandler]
     public function testConcreteInstantiationTrait()
     {
-        $closure = Foo::new("int");
+        $closure = Foo::T("int");
         $this->assertInstanceOf(\Closure::class,$closure);
         $instance = $closure(42);
         $expected_class = 'Foo‹int›';
@@ -27,9 +28,8 @@ class InstantiationTraitTest extends TestCase
     {
         $this->expectException(\Generics\TypeError::class);
         $this->expectExceptionMessage('Foo‹float›::__construct: Argument #1 ($x) must be of type float, string given');
-        Foo::new("float")('abc');
+        Foo::T("float")('abc');
     }
-
 }
 
 #[Generics\T]

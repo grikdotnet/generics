@@ -1,21 +1,15 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal;
+namespace Generics\Internal\model;
+
+use Generics\Internal\tokens\ConcreteInstantiationToken;
 
 /**
  * @internal
  */
-readonly class ArrowAstAnalyzer {
+class ArrowAstAnalyzer {
 
-    /**
-     * @param string $source_code
-     */
-    public function __construct(
-        private string $source_code
-    ){
-    }
-
-    public function do(\PhpParser\Node\Expr\ArrowFunction $node): ?ConcreteInstantiationToken
+    public static function do(string $source_code, \PhpParser\Node\Expr\ArrowFunction $node): ?ConcreteInstantiationToken
     {
         //check if class has #[\Generics\New] attribute
         foreach ($node->attrGroups as $group)
@@ -24,7 +18,7 @@ readonly class ArrowAstAnalyzer {
                     $attribute = $attr;
                     break 2;
                 }
-        if (!($attribute ?? false)) {
+        if (!isset($attribute)) {
             return null;
         }
         if (! $node->expr instanceof \PhpParser\Node\Expr\New_) {
@@ -38,7 +32,7 @@ readonly class ArrowAstAnalyzer {
 
         if ($parameterNode instanceof \PhpParser\Node\Expr\ConstFetch) {
             $concrete_type = substr(
-                $this->source_code,
+                $source_code,
                 $s = $parameterNode->getStartFilePos(),
                 $parameterNode->getEndFilePos() - $s +1
             );
@@ -47,7 +41,7 @@ readonly class ArrowAstAnalyzer {
         } else{
             throw new \TypeError('Invalid parameter type for the generic instance');
         }
-        $instance_class = substr($this->source_code,
+        $instance_class = substr($source_code,
             $s = $node->expr->class->getStartFilePos(),
             $node->expr->class->getEndFilePos() - $s +1
         );
@@ -55,7 +49,7 @@ readonly class ArrowAstAnalyzer {
         return new ConcreteInstantiationToken(
             offset: $node->expr->class->getStartFilePos(),
             length: strlen($instance_class),
-            class_name: $instance_class,
+            type: $instance_class,
             concrete_type: $concrete_type
         );
     }
