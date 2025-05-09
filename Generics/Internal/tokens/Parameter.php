@@ -9,7 +9,7 @@ class Parameter extends Token{
         public readonly string $name,
         public readonly string $type = '',
         public readonly bool   $is_wildcard = false,
-        public readonly string $concrete_type = '',
+        public readonly array  $concrete_types = [],
     )
     {}
 }

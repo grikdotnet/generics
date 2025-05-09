@@ -3,7 +3,6 @@
 namespace Generics\Internal\view;
 
 use Generics\Internal\tokens\ClassAggregate;
-use Generics\Internal\tokens\ConcreteInstantiationToken;
 use Generics\Internal\tokens\MethodHeaderAggregate;
 
 /**
@@ -19,12 +18,16 @@ readonly class ConcreteView {
      * Generate a string of the concrete type from the template class and a concrete type
      *
      * @param class-string $base_type
-     * @param string $concrete_type
+     * @param string[] $concrete_types
      * @return class-string
      */
-    public static function makeConcreteName(string $base_type, string $concrete_type): string
+    public static function makeConcreteName(string $base_type, array $concrete_types): string
     {
-        return $base_type.self::L_ARROW.str_replace('\\',self::NS,$concrete_type).self::R_ARROW;
+        $ct = '';
+        foreach ($concrete_types as $t) {
+            $ct .= self::L_ARROW.str_replace('\\',self::NS,$t).self::R_ARROW;
+        }
+        return $base_type.$ct;
     }
 
     public function __construct(private ClassAggregate $class)
@@ -33,18 +36,17 @@ readonly class ConcreteView {
     /**
      * Generate class declaration when an instance is created with a trait
      *
-     * @param ConcreteInstantiationToken $concrete
+     * @param string[] $concrete_types
      * @return string
      */
-    public function generateConcreteDeclaration(string $concrete_type): string
+    public function generateConcreteDeclaration(array $concrete_types): string
     {
         $base_class = $this->class->classname;
-        $type = str_replace('\\',self::NS,$concrete_type);
 
-        $code = "class ".self::makeConcreteName($base_class,$type).' extends '.$base_class.'{';
+        $code = "class ".self::makeConcreteName($base_class,$concrete_types).' extends '.$base_class.'{';
         foreach ($this->class->getTokens() as $token) {
             if ($token instanceof MethodHeaderAggregate) {
-                $code .= $this->generateMethod($token, $concrete_type);
+                $code .= $this->generateMethod($token, $concrete_types);
             }
         }
         $code .= '}';
@@ -56,24 +58,26 @@ readonly class ConcreteView {
      * in the wildcard template class, adding validation of the types for the concrete parameters
      *
      * @param MethodHeaderAggregate $method
-     * @param string $concrete_param_type
+     * @param string[] $concrete_param_types
      * @return string
      */
-    private function generateMethod(MethodHeaderAggregate $method, string $concrete_param_type): string
+    private function generateMethod(MethodHeaderAggregate $method, array $concrete_param_types): string
     {
         $parameters = $typed_parameters = [];
         foreach ($method->parameters as $parameter) {
             if ($parameter->type === '') {
-                if ($parameter->is_wildcard){
-                    $typed_parameters[] = $concrete_param_type.' $'.$parameter->name;
+                if ($parameter->is_wildcard && $concrete_param_types !== []){
+                    if ($concrete_param_types) {
+                        $typed_parameters[] = array_shift($concrete_param_types).' $'.$parameter->name;
+                    }
                 } else {
                     $typed_parameters[] = '$'.$parameter->name;
                 }
             } else {
-                if ($parameter->concrete_type === '') {
+                if ($parameter->concrete_types === []) {
                     $typed_parameters[] = $parameter->type.' $'.$parameter->name;
                 } else {
-                    $type = self::makeConcreteName($parameter->type,$parameter->concrete_type);
+                    $type = self::makeConcreteName($parameter->type,$parameter->concrete_types);
                     $typed_parameters[] = str_replace('\\',self::NS,$type).' $'.$parameter->name;
                 }
             }

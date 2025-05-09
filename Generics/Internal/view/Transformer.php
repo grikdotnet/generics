@@ -5,6 +5,7 @@ namespace Generics\Internal\view;
 use Generics\Internal\tokens\ConcreteInstantiationToken;
 use Generics\Internal\tokens\FileAggregate;
 use Generics\Internal\tokens\Parameter;
+use Generics\Internal\tokens\Token;
 
 /**
  * Applies tokens found by the parser to the PHP code.
@@ -27,7 +28,7 @@ readonly class Transformer {
         $tokens = self::prepareTokens($fileAggregate);
         foreach ($tokens as $token) {
             $source = substr($source,0,$token->offset)
-                . ConcreteView::makeConcreteName($token->type,$token->concrete_type)
+                . ConcreteView::makeConcreteName($token->type,$token->concrete_types)
                 . ($token instanceof Parameter ? ' $'.$token->name : '')
                 . substr($source,$token->offset+$token->length);
         }
@@ -41,7 +42,7 @@ readonly class Transformer {
      * and sort them according to positions in file in reverse order
      *
      * @param FileAggregate $fileAggregate
-     * @return array
+     * @return Token[]
      */
     private static function prepareTokens(FileAggregate $fileAggregate): array
     {
@@ -49,7 +50,7 @@ readonly class Transformer {
         foreach ($fileAggregate->classAggregates as $classAggregate) {
             foreach ($classAggregate->getTokens() as $methodAggregate) {
                 foreach ($methodAggregate->parameters as $parameter) {
-                    if ($parameter->concrete_type !== '') {
+                    if ($parameter->concrete_types !== '') {
                         $tokens[$parameter->offset] = $parameter;
                     }
                 }

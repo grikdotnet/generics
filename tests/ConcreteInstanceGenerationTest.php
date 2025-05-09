@@ -37,7 +37,7 @@ final class ConcreteInstanceGenerationTest extends TestCase
 
         //$instantiation_code
         //    $c = (#[Generics\T(\ACME\Bar)] fn() => new Foo($x))(); ';
-        $concrete_type = "\ACME\Bar";
+        $concrete_type = ["\ACME\Bar"];
 
         $expected_declaration = 'class Foo‹⧵ACME⧵Bar› extends Foo{'.
             'public function __construct(int $x, #[\Generics\T] $param, string $y, $z){'.

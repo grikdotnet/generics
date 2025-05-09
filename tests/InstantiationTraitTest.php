@@ -15,11 +15,9 @@ class InstantiationTraitTest extends TestCase
     #[WithoutErrorHandler]
     public function testConcreteInstantiationTrait()
     {
-        $closure = Foo::T("int");
-        $this->assertInstanceOf(\Closure::class,$closure);
-        $instance = $closure(42);
-        $expected_class = 'Foo‹int›';
-        $this->assertInstanceOf($expected_class,$instance);
+        $instance = new (Foo::T("int","float"))(42,1.32);
+        $this->assertInstanceOf(Foo‹int›‹float›::class,$instance);
+
         $this->assertEquals(42,$instance->x);
     }
 
@@ -27,14 +25,14 @@ class InstantiationTraitTest extends TestCase
     public function testInvalidType()
     {
         $this->expectException(\Generics\TypeError::class);
-        $this->expectExceptionMessage('Foo‹float›::__construct: Argument #1 ($x) must be of type float, string given');
-        Foo::T("float")('abc');
+        $this->expectExceptionMessage('Foo‹ABC›‹int›::__construct: Argument #1 ($x) must be of type ABC, string given');
+        new (Foo::T("ABC","int"))('abc',4);
     }
 }
 
 #[Generics\T]
 class Foo {
     use \Generics\GenericTrait;
-    public function __construct(#[Generics\T] public $x)
+    public function __construct(#[Generics\T] public $x, #[Generics\T] $y)
     {}
 }

@@ -31,14 +31,51 @@ final class GenericParametersTest extends ParserTestBase
             length: 39,
             name: 'param',
             type: "ACME\Bar",
-            concrete_type: "Foo"
+            concrete_types: ["Foo"]
         ));
         $methodAggregate->addParameter(new \Generics\Internal\tokens\Parameter(
             offset: 163,
             length: 41,
             name: 'y',
             type: "\ACME\Bar",
-            concrete_type: "\Qwe\Test"
+            concrete_types: ["\Qwe\Test"]
+        ));
+        $expected = new FileAggregate('',['Foo'=>$classAggregate],[]);
+
+        $actual = $this->traverse($code);
+        self::assertEquals($expected, $actual);
+    }
+
+    public function testMultipleTypeParameter(): void
+    {
+        $code = '<?php
+        class Foo{
+            public function foo(
+                #[\Generics\T(\MyClass, float)] \ACME\Bar $param1,
+                #[\Generics\T("ACME\Bar<MyClass><int>")] ACME\Bar $param2,
+            ){}
+        }';
+        $headline = 'public function foo( #[\Generics\T(\MyClass, float)] \ACME\Bar $param1, #[\Generics\T("ACME\Bar<MyClass><int>")] ACME\Bar $param2)';
+        $classAggregate = new \Generics\Internal\tokens\ClassAggregate('Foo');
+        $classAggregate->addMethodAggregate(
+            $methodAggregate = new \Generics\Internal\tokens\MethodHeaderAggregate(
+                offset: 37,length: 161,name: 'foo',
+                headline: $headline
+            )
+        );
+        $methodAggregate->addParameter(new \Generics\Internal\tokens\Parameter(
+            offset: 74,
+            length: 49,
+            name: 'param1',
+            type: "\ACME\Bar",
+            concrete_types: ["\MyClass",'float']
+        ));
+        $methodAggregate->addParameter(new \Generics\Internal\tokens\Parameter(
+            offset: 141,
+            length: 57,
+            name: 'param2',
+            type: "ACME\Bar",
+            concrete_types: ["MyClass",'int']
         ));
         $expected = new FileAggregate('',['Foo'=>$classAggregate],[]);
 

@@ -9,9 +9,9 @@ use Generics\Internal\tokens\UnionParameterToken;
 use Generics\Internal\view\ConcreteView;
 use PhpParser\Node\Attribute;
 use PhpParser\Node\Expr;
-use PhpParser\Node\Expr\BinaryOp\BitwiseOr;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Name;
 use PhpParser\Node\Param;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -149,6 +149,8 @@ final class ClassAstAnalyzer
     }
 
     /**
+     * Create a token for a concrete parameter
+     *
      * @param string $method_name
      * @param Param $param
      * @param Attribute $attr
@@ -159,79 +161,94 @@ final class ClassAstAnalyzer
     private function concreteParameter(string $method_name, Param $param, Attribute $attr): Parameter
     {
         if ($attr->args === []) {
-            throw new \RuntimeException('concreteParameter() should not be called for an attribute without a parameter');
+            throw new \RuntimeException('Parse error: the concrete type attribute has no parameter');
         }
 
-        $attributeParamExpr = $attr->args[0]->value;
-        try{
-            $attribute_parameter = $this->getSource($attributeParamExpr);
-        }catch (\TypeError $E){
-            throw new \ParseError (
-                'Invalid generic type ' . $attributeParamExpr->getType() . ' in '.
-                $this->class_name.'::'.$method_name.'($'.$param->var->name.') line '.$attr->getLine()
-            );
-        }
-        if (preg_match('/^\s*((\\\\|\S)+)\s*<(\s*(\\\\|\S)+\s*) *>/i',$attribute_parameter,$matches)) {
-            //syntax #[\Generics\T("Foo<Bar>")] $x is used
-            $concrete_type = $matches[3];
-            $generic_type = $matches[1];
-            if ($param->type && 0 !== strcasecmp($param->type->name,$generic_type)) {
-                throw new \ParseError (
-                    'A parameter type ' . $param->type->name . ' does not match the generic type '.
-                    $matches[1] .' in ' .
-                    $this->class_name.'::'.$method_name.'('.$param->type->name.' $'.$param->var->name.') on line '
-                    .$attr->getLine()
+        $wildcard_type = false;
+        if ($param->type !== null ) {
+            if (!$param->type instanceof Name) {
+                throw new \ParseError('Invalid wildcard type for a concrete parameter in ' .
+                    $this->class_name . '::' . $method_name . '($' . $param->var->name . ') line ' . $attr->getLine()
                 );
             }
-        } elseif ($param->type) {
-            $generic_type = $param->type->name;
-            $concrete_type = $attribute_parameter;
+            $wildcard_type = ($param->type instanceof Name\FullyQualified ? '\\' : '') . $param->type->name;
+        }
+
+        //There are seversal possible syntaxes to define concrete types to define a concrete type
+        // for a wildcard parameter. The first is #[\Generics\T("int", "float")] Foo $param
+        if (isset($attr->args[1])) {
+            //more than one parameter provided, so it is the first syntax with several concrete types
+            //ensure the generic type is provided
+            if (!$wildcard_type) {
+                throw new \ParseError('Missing wildcard type for a concrete parameter in '.
+                    $this->class_name.'::'.$method_name.'($'.$param->var->name.') line '.$attr->getLine()
+                );
+            }
+            $concrete_types = array_map(fn($a)=>$this->getSource($a->value),$attr->args);
         } else {
-            throw new \ParseError('A non-generic parameter type ('.$attribute_parameter.
-                ') should be declared explicitly for '.
-                $this->class_name.'::'.$method_name.'($'.$param->var->name.') line '.$attr->getLine())
-            ;
+            // the second syntax is eitehr #[\Generics\T("Foo<int><float>")] Foo $param
+            $attributeParamExpr = $attr->args[0]->value;
+            try {
+                $concrete_type_declaration = $this->getSource($attributeParamExpr);
+            } catch (\TypeError $E) {
+                throw new \ParseError (
+                    'Invalid concrete type ' . $attributeParamExpr->getType() . ' in '.
+                    $this->class_name.'::'.$method_name.'($'.$param->var->name.') line '.$attr->getLine()
+                );
+            }
+            if (preg_match('/^\s*([^<>\s]+)\s*<\s*[^<>\s]+\s*>/',$concrete_type_declaration,$matches)) {
+                if ($wildcard_type && 0 !== strcasecmp($param->type->name,$wildcard_type)) {
+                    throw new \ParseError (
+                        'The parameter ' . $param->type->name . ' type does not match the wildcard type '.
+                        $wildcard_type .' in ' .
+                        $this->class_name.'::'.$method_name.'('.$param->type->name.' $'.$param->var->name.') on line '
+                        .$attr->getLine()
+                    );
+                }
+                if (!$wildcard_type) {
+                    $wildcard_type = $matches[1];
+                }
+                preg_match_all('/\s*<\s*([^<>\s]+)\s*>\s*/', $concrete_type_declaration, $matches);
+                $concrete_types = $matches[1];
+            } elseif($wildcard_type) {
+                // it is a syntax #[\Generics\T("float")] Foo $param
+                $concrete_types = [$concrete_type_declaration];
+            } else {
+                throw new \ParseError (
+                    'Invalid concrete type ' . $attributeParamExpr->getType() . ' in '.
+                    $this->class_name.'::'.$method_name.'($'.$param->var->name.') line '.$attr->getLine()
+                );
+            }
         }
 
         $token = new Parameter(
-                offset: $s = $param->getStartFilePos(),
-                length: $param->getEndFilePos() - $s +1,
-                name: $param->var->name,
-                type: $generic_type,
-                concrete_type: $concrete_type
+            offset: $s = $param->getStartFilePos(),
+            length: $param->getEndFilePos() - $s +1,
+            name: $param->var->name,
+            type: $wildcard_type,
+            concrete_types: $concrete_types
             );
         return $token;
     }
 
-    /**
-     * @param BitwiseOr $attributeParametersNode
-     * @param Param $functionParameterNode
-     * @return UnionParameterToken
-     */
-    private function makeUnionType(BitwiseOr $attributeParametersNode, Param $functionParameterNode) : UnionParameterToken
+    private function extractConcreteParameterParts(string $type): array
     {
-        $type_nodes = [];
-        $node = $attributeParametersNode;
-        while (true) {
-            $type_nodes[] = $this->getSource($node->right);
+        $pattern = '/^([^<>]+)(?:\s*<\s*([^<>]*)\s*>\s*)+/';
 
-            if ($node->left instanceof BitwiseOr) {
-                $node = $node->left;
-                continue;
-            }
-            $type_nodes[] = $this->getSource($node->left);
-            break;
+        if (preg_match($pattern, $type, $matches)) {
+            $wildcard = trim($matches[1]);
+
+            // Extract all values inside angle brackets, allowing for spaces
+            preg_match_all('/\s*<\s*([^<>]*)\s*>\s*/', $type, $matches);
+            $concrete = array_map('trim', $matches[1]);
+
+            return [$wildcard, $concrete];
         }
-
-        return new UnionParameterToken(
-            offset: $s = $functionParameterNode->getStartFilePos(),
-            length: $functionParameterNode->getEndFilePos() - $s +1,
-            types: $type_nodes
-        );
+        return [];
     }
 
     /**
-     * Fetch the type from the source code, cause php-parser removes leading \ from the class name
+     * Fetch the type from the source code, cause php-parser removes leading \ from namespaces
      *
      * @param Expr $expr
      * @return string

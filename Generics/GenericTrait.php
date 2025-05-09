@@ -8,8 +8,9 @@ trait GenericTrait {
      * @template T
      * @param string|class-string<T> $type
      * @throws \ReflectionException
+     * @return self
      */
-    static public function T(string $type): \Closure
+    static public function new(string $type): \Closure
     {
         if (!Enable::enabled()) {
             throw new \RuntimeException('Generics processing is not enabled');
@@ -18,10 +19,8 @@ trait GenericTrait {
             throw new \RuntimeException('The class '.__CLASS__.' is not a generic template');
         }
         $target_class = Concrete::createClass(__CLASS__,$type);
-        /** @var $instance self */
         $instance = (new \ReflectionClass($target_class))->newInstanceWithoutConstructor();
         /**
-         * @template T
          * @return self
          */
         return function (...$args) use ($instance) {
@@ -30,6 +29,23 @@ trait GenericTrait {
             }
             return $instance;
         };
+    }
+
+    /**
+     * @template T
+     * @param string|class-string<T> $type
+     * @throws \ReflectionException
+     * @return self
+     */
+    static public function T(string ... $types): string
+    {
+        if (!Enable::enabled()) {
+            throw new \RuntimeException('Generics processing is not enabled');
+        }
+        if ([] === (new \ReflectionClass(__CLASS__))->getAttributes(T::class)) {
+            throw new \RuntimeException('The class '.__CLASS__.' is not a generic template');
+        }
+        return Concrete::createClass(__CLASS__,$types);
     }
 
 }

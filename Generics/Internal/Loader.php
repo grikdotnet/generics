@@ -94,12 +94,12 @@ class Loader{
      * Creates concrete classes based on the wildcard templates
      *
      * @param class-string $wildcard_class
-     * @param string $type
+     * @param string[] $types
      * @return bool
      */
-    public function createConcreteClass(string $wildcard_class, string $type): bool
+    public function createConcreteClass(string $wildcard_class, array $types): bool
     {
-        $concrete_class_name = ConcreteView::makeConcreteName($wildcard_class, $type);
+        $concrete_class_name = ConcreteView::makeConcreteName($wildcard_class, $types);
         $classAggregate = null;
         if ($this->opcache->is_available) {
             if ($this->opcache->loadVirtualClass($concrete_class_name)) {
@@ -137,7 +137,7 @@ class Loader{
         }
 
         $View = new ConcreteView($classAggregate);
-        $class_declaration = $View->generateConcreteDeclaration($type);
+        $class_declaration = $View->generateConcreteDeclaration($types);
         if ($this->opcache->is_available) {
             $this->opcache->includeVirtualClass($concrete_class_name,$class_declaration);
         } else {

@@ -54,15 +54,17 @@ final class InvalidParameterTest extends ParserTestBase
             public function __construct(int $x, #[\Generics\T(42)] $param){}
         }';
         $this->expectException(\ParseError::class);
-        $this->expectExceptionMessage('Invalid generic type Scalar_Int in Foo::__construct($param) line 3');
+        $this->expectExceptionMessage('Invalid concrete type Scalar_Int in Foo::__construct($param) line 3');
         $this->traverse($code);
+    }
 
+    public function testTypeError(): void
+    {
         $code = '<?php
         class Foo{
             public function __construct(int $x, #[\Generics\T(class)] $param){}
         }';
-        $this->expectException(\ParseError::class);
-        $this->expectExceptionMessage('Invalid generic type Scalar_Int in Foo::__construct($param) line 3');
+        $this->expectException(\TypeError::class);
         $this->traverse($code);
     }
 

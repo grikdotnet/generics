@@ -30,7 +30,7 @@ $expected2 = new ClassAggregate('Bar');
 $expected2->addMethodAggregate(
     $methodAggregate = new MethodHeaderAggregate(offset: 37,length: 178,name: '__construct',headline: 'public function __construct(#[\Generics\T(Foo)] ACME\Bar $y, #[\Generics\T] $z)')
 );
-$methodAggregate->addParameter(new Parameter(offset: 106, length: 35, name: 'y', type: "ACME\Bar", concrete_type: "Foo"));
+$methodAggregate->addParameter(new Parameter(offset: 106, length: 35, name: 'y', type: "ACME\Bar", concrete_types: "Foo"));
 $methodAggregate->addParameter(new Parameter(offset: 159, length: 41, name: 'z', is_wildcard: true));
 
 var_export(($expected1 == $Foo) && ($expected2 == $Bar));

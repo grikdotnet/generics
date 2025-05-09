@@ -22,19 +22,16 @@ class Concrete {
 
     /**
      * @param class-string $wildcard_class_name
-     * @param string $type
+     * @param string[] $types
      * @return string
      * @throws \RuntimeException
      */
-    public static function createClass(string $wildcard_class_name, string $type): string
+    public static function createClass(string $wildcard_class_name, array $types): string
     {
-        if (!Enable::enabled()) {
-            throw new \RuntimeException('Generics processing is not enabled');
-        }
-        $concrete_class_name = ConcreteView::makeConcreteName($wildcard_class_name, $type);
+        $concrete_class_name = ConcreteView::makeConcreteName($wildcard_class_name, $types);
         //does virtual class declaration exist?
         if (class_exists($concrete_class_name,false)
-            || self::$loader->createConcreteClass($wildcard_class_name,$type)
+            || self::$loader->createConcreteClass($wildcard_class_name,$types)
         ){
             return $concrete_class_name;
         }

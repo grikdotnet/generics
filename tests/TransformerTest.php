@@ -13,7 +13,7 @@ final class TransformerTest extends ParserTestBase
         class Foo{
             public function __construct(
                 #[\Generics\T(Foo)] ACME\Bar $param,
-                #[\Generics\T("\ACME\Bar<\Qwe\Test>")] $y,
+                #[\Generics\T("\ACME\Bar<\Qwe\Test><int>")] $y,
             ){}
         }';
         $fileAggregate = $this->traverse($code);
@@ -22,7 +22,7 @@ final class TransformerTest extends ParserTestBase
         class Foo{
             public function __construct(
                 ACME\Bar‹Foo› $param,
-                \ACME\Bar‹⧵Qwe⧵Test› $y,
+                \ACME\Bar‹⧵Qwe⧵Test›‹int› $y,
             ){}
         }';
         self::assertEquals($expected, $augmented);
@@ -43,13 +43,13 @@ final class TransformerTest extends ParserTestBase
             offset: 129,
             length: 8,
             type: "Acme\Foo",
-            concrete_type: "int"
+            concrete_types: ["int"]
         );
         $expected[194] = new \Generics\Internal\tokens\ConcreteInstantiationToken(
             offset: 194,
             length: 9,
             type: "\Acme\Bar",
-            concrete_type: "MyClass"
+            concrete_types: ["MyClass"]
         );
 
         $fileAggregate = $this->traverse($code);
@@ -66,7 +66,7 @@ final class TransformerTest extends ParserTestBase
             offset: 78,
             length: 3,
             type: "Foo",
-            concrete_type: "\Acme\Bar"
+            concrete_types: ["\Acme\Bar"]
         );
 
         $fileAggregate = $this->traverse($code);
@@ -82,7 +82,7 @@ final class TransformerTest extends ParserTestBase
             offset: 49,
             length: 3,
             type: "Foo",
-            concrete_type: "\Acme\Bar",
+            concrete_types: ["\Acme\Bar"],
         );
 
         $fileAggregate = $this->traverse($code);

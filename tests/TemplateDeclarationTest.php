@@ -50,7 +50,7 @@ final class TemplateDeclarationTest extends ParserTestBase
         class Foo{
             #[\Generics\ReturnT]
             public function __construct(
-                int &$x, #[\Generics\T] $param, ?\ACME\Bar $y=null, float ... $z
+                int &$x, #[\Generics\T] $param, #[\Generics\T] $y=null, float ... $z
             ){}
             private function bar(){} 
         }';
@@ -60,16 +60,16 @@ final class TemplateDeclarationTest extends ParserTestBase
         $expected->addMethodAggregate(
             $methodAggregate = new \Generics\Internal\tokens\MethodHeaderAggregate(
                 offset: 60,
-                length: 142,
+                length: 146,
                 name: '__construct',
-                headline: '#[\Generics\ReturnT] public function __construct( int &$x, #[\Generics\T] $param, ?\ACME\Bar $y=null, float ... $z)'
+                headline: '#[\Generics\ReturnT] public function __construct( int &$x, #[\Generics\T] $param, #[\Generics\T] $y=null, float ... $z)'
             )
         );
         $methodAggregate->setWildcardReturn();
         $methodAggregate->addParameter(new Parameter(offset: 138, length:7,  name: 'x', type:'int &'));
         $methodAggregate->addParameter(new Parameter(offset: 162, length:6, name: 'param', is_wildcard: true));
-        $methodAggregate->addParameter(new Parameter(offset: 170, length:13, name: 'y', type:'?\ACME\Bar'));
-        $methodAggregate->addParameter(new Parameter(offset: 190, length:12, name: 'z', type:'float ...'));
+        $methodAggregate->addParameter(new Parameter(offset: 185, length:2, name: 'y', is_wildcard: true));
+        $methodAggregate->addParameter(new Parameter(offset: 194, length:12, name: 'z', type:'float ...'));
 
         $fileAggregate = $this->traverse($code);
         self::assertEquals('Foo',$fileAggregate->classAggregates['Foo']->classname);

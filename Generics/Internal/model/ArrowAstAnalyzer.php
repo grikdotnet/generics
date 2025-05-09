@@ -31,13 +31,13 @@ class ArrowAstAnalyzer {
         $parameterNode = $attribute->args[0]->value;
 
         if ($parameterNode instanceof \PhpParser\Node\Expr\ConstFetch) {
-            $concrete_type = substr(
+            $concrete_types[] = substr(
                 $source_code,
                 $s = $parameterNode->getStartFilePos(),
                 $parameterNode->getEndFilePos() - $s +1
             );
         } elseif ($parameterNode instanceof \PhpParser\Node\Scalar\String_) {
-            $concrete_type = $parameterNode->value;
+            $concrete_types[] = $parameterNode->value;
         } else{
             throw new \TypeError('Invalid parameter type for the generic instance');
         }
@@ -50,7 +50,7 @@ class ArrowAstAnalyzer {
             offset: $node->expr->class->getStartFilePos(),
             length: strlen($instance_class),
             type: $instance_class,
-            concrete_type: $concrete_type
+            concrete_types: $concrete_types
         );
     }
 }
