@@ -1,11 +1,11 @@
 <?php
 
-use Generics\Internal\{Container,
+use grikdotnet\generics\Internal\{Container,
+    service\Opcache,
     tokens\ClassAggregate,
     tokens\FileAggregate,
     tokens\MethodHeaderAggregate,
-    tokens\Parameter,
-    service\Opcache};
+    tokens\Parameter};
 
 include '../../vendor/autoload.php';
 

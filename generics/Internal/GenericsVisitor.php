@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal;
+namespace grikdotnet\generics\Internal;
 
-use Generics\Internal\model\ArrowAstAnalyzer;
-use Generics\Internal\model\ClassAstAnalyzer;
-use Generics\Internal\tokens\ClassAggregate;
-use Generics\Internal\tokens\ConcreteInstantiationToken;
-use Generics\Internal\tokens\FileAggregate;
+use grikdotnet\generics\Internal\model\ArrowAstAnalyzer;
+use grikdotnet\generics\Internal\model\ClassAstAnalyzer;
+use grikdotnet\generics\Internal\tokens\ClassAggregate;
+use grikdotnet\generics\Internal\tokens\ConcreteInstantiationToken;
+use grikdotnet\generics\Internal\tokens\FileAggregate;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 

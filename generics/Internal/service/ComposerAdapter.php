@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal\service;
+namespace grikdotnet\generics\Internal\service;
 
 use Composer\Autoload\ClassLoader;
 
@@ -19,7 +19,7 @@ class ComposerAdapter {
 
     public function findClassFile(string $class): string | false
     {
-        if (str_starts_with($class, 'Generics\\')) {
+        if (str_starts_with($class, 'grikdotnet\\generics')) {
             return false;
         }
         $path = false;

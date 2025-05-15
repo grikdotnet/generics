@@ -1,9 +1,8 @@
 <?php
 
-use Generics\Internal\tokens\ClassAggregate;
+use grikdotnet\generics\Internal\tokens\ClassAggregate;
+use grikdotnet\generics\Internal\tokens\Parameter;
 use PHPUnit\Framework\TestCase;
-use GuzzleHttp\Client;
-use Generics\Internal\tokens\Parameter;
 
 class OpcacheTest extends TestCase {
 
@@ -12,7 +11,7 @@ class OpcacheTest extends TestCase {
         $classAggregate = new ClassAggregate('Foo');
         $classAggregate->setIsTemplate();
         $classAggregate->addMethodAggregate(
-            $methodAggregate = new \Generics\Internal\tokens\MethodHeaderAggregate(
+            $methodAggregate = new \grikdotnet\generics\Internal\tokens\MethodHeaderAggregate(
                 offset: 60,
                 length: 156,
                 name: '__construct',

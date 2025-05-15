@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Generics;
+namespace grikdotnet\generics;
 
-use Generics\Internal\Loader;
-use Generics\Internal\view\ConcreteView;
+use grikdotnet\generics\Internal\Loader;
+use grikdotnet\generics\Internal\view\ConcreteView;
 
 /**
  * An entry point for the trait to generate a concrete classes from a wildcard template

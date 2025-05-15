@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal\view;
+namespace grikdotnet\generics\Internal\view;
 
-use Generics\Internal\tokens\ClassAggregate;
-use Generics\Internal\tokens\MethodHeaderAggregate;
+use grikdotnet\generics\Internal\tokens\ClassAggregate;
+use grikdotnet\generics\Internal\tokens\MethodHeaderAggregate;
 
 /**
  * @internal
@@ -87,7 +87,7 @@ readonly class ConcreteView {
             '{try{'.
                 'return (fn('.implode(',',$typed_parameters).')=>parent::'.$method->name.'(...func_get_args()))'.
                     '('.implode(',',$parameters).');'.
-            '}catch(\TypeError $e){throw \Generics\TypeError::fromTypeError($e);}'.
+            '}catch(\TypeError $e){throw \grikdotnet\generics\TypeError::fromTypeError($e);}'.
         '}';
         return $code;
     }

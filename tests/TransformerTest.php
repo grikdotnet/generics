@@ -3,7 +3,7 @@ if (!class_exists(ParserTestBase::class, false)) {
     include 'ParserTestBase.php';
 }
 
-use Generics\Internal\view\Transformer;
+use grikdotnet\generics\Internal\view\Transformer;
 use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 
 final class TransformerTest extends ParserTestBase
@@ -39,13 +39,13 @@ final class TransformerTest extends ParserTestBase
             ';
         $expected = [];
 
-        $expected[129] = new \Generics\Internal\tokens\ConcreteInstantiationToken(
+        $expected[129] = new \grikdotnet\generics\Internal\tokens\ConcreteInstantiationToken(
             offset: 129,
             length: 8,
             type: "Acme\Foo",
             concrete_types: ["int"]
         );
-        $expected[194] = new \Generics\Internal\tokens\ConcreteInstantiationToken(
+        $expected[194] = new \grikdotnet\generics\Internal\tokens\ConcreteInstantiationToken(
             offset: 194,
             length: 9,
             type: "\Acme\Bar",
@@ -62,7 +62,7 @@ final class TransformerTest extends ParserTestBase
         $code = '<?php namespace ACME;
             $c = (#[\Generics\T(\Acme\Bar)] fn() => new Foo($x))(); ';
 
-        $expected[78] = new \Generics\Internal\tokens\ConcreteInstantiationToken(
+        $expected[78] = new \grikdotnet\generics\Internal\tokens\ConcreteInstantiationToken(
             offset: 78,
             length: 3,
             type: "Foo",
@@ -78,7 +78,7 @@ final class TransformerTest extends ParserTestBase
     {
         $code = '<?php $c = (#[Generics\T(\Acme\Bar)] fn() => new Foo($x))(); ';
 
-        $expectedToken = new \Generics\Internal\tokens\ConcreteInstantiationToken(
+        $expectedToken = new \grikdotnet\generics\Internal\tokens\ConcreteInstantiationToken(
             offset: 49,
             length: 3,
             type: "Foo",

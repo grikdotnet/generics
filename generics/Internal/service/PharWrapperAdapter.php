@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal\service;
+namespace grikdotnet\generics\Internal\service;
 
 /**
  * Provides the stream wrapper compatible with Opcache

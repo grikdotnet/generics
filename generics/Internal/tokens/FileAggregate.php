@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal\tokens;
+namespace grikdotnet\generics\Internal\tokens;
 
 /**
  * This is a DTO to pass composite result of parsing source code

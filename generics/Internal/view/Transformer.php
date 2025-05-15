@@ -1,11 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal\view;
+namespace grikdotnet\generics\Internal\view;
 
-use Generics\Internal\tokens\ConcreteInstantiationToken;
-use Generics\Internal\tokens\FileAggregate;
-use Generics\Internal\tokens\Parameter;
-use Generics\Internal\tokens\Token;
+use grikdotnet\generics\Internal\tokens\FileAggregate;
+use grikdotnet\generics\Internal\tokens\Parameter;
+use grikdotnet\generics\Internal\tokens\Token;
 
 /**
  * Applies tokens found by the parser to the PHP code.

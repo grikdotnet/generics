@@ -1,14 +1,14 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal;
+namespace grikdotnet\generics\Internal;
 
 use Composer\Autoload\ClassLoader;
-use Generics\Internal\service\ComposerAdapter;
-use Generics\Internal\service\Opcache;
-use Generics\Internal\service\PharWrapperAdapter;
-use Generics\Internal\tokens\FileAggregate;
-use Generics\Internal\view\ConcreteView;
-use Generics\Internal\view\Transformer;
+use grikdotnet\generics\Internal\service\ComposerAdapter;
+use grikdotnet\generics\Internal\service\Opcache;
+use grikdotnet\generics\Internal\service\PharWrapperAdapter;
+use grikdotnet\generics\Internal\tokens\FileAggregate;
+use grikdotnet\generics\Internal\view\ConcreteView;
+use grikdotnet\generics\Internal\view\Transformer;
 use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Lexer;
 use PhpParser\NodeTraverser;
@@ -35,9 +35,9 @@ class Loader{
             throw new \RuntimeException('Could not obtain a Composer loader');
         }
         $this->composer = new ComposerAdapter(...$loaders);
-        spl_autoload_register($this->autoloader(...), true,true);
         self::$instance = $this;
         $this->opcache = new Opcache;
+        spl_autoload_register($this->autoloader(...), true,true);
         if ($this->opcache->is_available) {
             $this->opcache->linkCachedTokens($this->container);
             register_shutdown_function(fn()=>$this->opcache->store($container));
@@ -46,7 +46,7 @@ class Loader{
 
     /**
      * Called from the PHP core.
-     * Obtains the source file, parses, transforms, and stores to Zend OpCache
+     * Reads the source file, parses, transforms, and stores to Zend OpCache
      *
      * @param class-string $class
      * @return bool

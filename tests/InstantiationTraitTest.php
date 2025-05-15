@@ -10,7 +10,7 @@ class InstantiationTraitTest extends TestCase
     {
         $composer = current(ClassLoader::getRegisteredLoaders());
         $composer->addClassMap([Foo::class=>__FILE__]);
-        new \Generics\Enable();
+        new \grikdotnet\generics\Enable();
     }
     #[WithoutErrorHandler]
     public function testConcreteInstantiationTrait()
@@ -24,15 +24,15 @@ class InstantiationTraitTest extends TestCase
     #[WithoutErrorHandler]
     public function testInvalidType()
     {
-        $this->expectException(\Generics\TypeError::class);
+        $this->expectException(\grikdotnet\generics\TypeError::class);
         $this->expectExceptionMessage('Foo‹ABC›‹int›::__construct: Argument #1 ($x) must be of type ABC, string given');
         new (Foo::T("ABC","int"))('abc',4);
     }
 }
 
-#[Generics\T]
+#[\Generics\T]
 class Foo {
-    use \Generics\GenericTrait;
-    public function __construct(#[Generics\T] public $x, #[Generics\T] $y)
+    use \grikdotnet\generics\GenericTrait;
+    public function __construct(#[\Generics\T] public $x, #[\Generics\T] $y)
     {}
 }

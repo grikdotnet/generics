@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal\service;
+namespace grikdotnet\generics\Internal\service;
 
-use Generics\Internal\Container;
+use grikdotnet\generics\Internal\Container;
 
 /**
  * @internal

@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal;
+namespace grikdotnet\generics\Internal;
 
-use Generics\Internal\tokens\ClassAggregate;
-use Generics\Internal\tokens\FileAggregate;
+use grikdotnet\generics\Internal\tokens\ClassAggregate;
+use grikdotnet\generics\Internal\tokens\FileAggregate;
 
 /**
  * @internal

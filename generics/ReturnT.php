@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Generics;
+namespace grikdotnet\generics;
 
 /**
  * An attribute declaration for IDE autocomplete

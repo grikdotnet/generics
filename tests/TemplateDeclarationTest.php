@@ -4,7 +4,7 @@ if (!class_exists(ParserTestBase::class, false)) {
     include 'ParserTestBase.php';
 }
 
-use Generics\Internal\tokens\Parameter;
+use grikdotnet\generics\Internal\tokens\Parameter;
 
 final class TemplateDeclarationTest extends ParserTestBase
 {
@@ -55,10 +55,10 @@ final class TemplateDeclarationTest extends ParserTestBase
             private function bar(){} 
         }';
 
-        $expected = new \Generics\Internal\tokens\ClassAggregate('Foo');
+        $expected = new \grikdotnet\generics\Internal\tokens\ClassAggregate('Foo');
         $expected->setIsTemplate();
         $expected->addMethodAggregate(
-            $methodAggregate = new \Generics\Internal\tokens\MethodHeaderAggregate(
+            $methodAggregate = new \grikdotnet\generics\Internal\tokens\MethodHeaderAggregate(
                 offset: 60,
                 length: 146,
                 name: '__construct',
@@ -88,10 +88,10 @@ final class TemplateDeclarationTest extends ParserTestBase
             private function bar(){} 
         }';
 
-        $expected = new \Generics\Internal\tokens\ClassAggregate('Foo');
+        $expected = new \grikdotnet\generics\Internal\tokens\ClassAggregate('Foo');
         $expected->setIsTemplate();
         $expected->addMethodAggregate(
-            $methodAggregate = new \Generics\Internal\tokens\MethodHeaderAggregate(
+            $methodAggregate = new \grikdotnet\generics\Internal\tokens\MethodHeaderAggregate(
                 offset: 60,
                 length: 110,
                 name: 'foo',

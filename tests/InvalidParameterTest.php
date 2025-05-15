@@ -3,13 +3,10 @@ if (!class_exists(ParserTestBase::class, false)) {
     include 'ParserTestBase.php';
 }
 
-use Generics\Internal\Container;
-use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Lexer;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser\Php8;
 use PHPUnit\Framework\Attributes\WithoutErrorHandler;
-use PHPUnit\Framework\TestCase;
 
 final class InvalidParameterTest extends ParserTestBase
 {

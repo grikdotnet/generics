@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
+use grikdotnet\generics\Internal\tokens\FileAggregate;
 use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Lexer;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser\Php8;
 use PHPUnit\Framework\TestCase;
-use Generics\Internal\tokens\FileAggregate;
 
 abstract class ParserTestBase extends TestCase
 {
@@ -27,7 +27,7 @@ abstract class ParserTestBase extends TestCase
     protected function traverse(string $code): FileAggregate
     {
         $ast = $this->parser->parse($code, new Collecting);
-        $visitor = new \Generics\Internal\GenericsVisitor('',$code);
+        $visitor = new \grikdotnet\generics\Internal\GenericsVisitor('',$code);
         $this->traverser->addVisitor($visitor);
         $this->traverser->traverse($ast);
         return $visitor->getFileTokens();

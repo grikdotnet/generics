@@ -1,6 +1,6 @@
 <?php
 
-namespace Generics;
+namespace grikdotnet\generics;
 
 class TypeError extends \TypeError {
     private array $trace = [];

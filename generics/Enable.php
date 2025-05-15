@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Generics;
+namespace grikdotnet\generics;
 
 use Composer\Autoload\ClassLoader;
-use Generics\Internal\{Loader, Container};
+use grikdotnet\generics\Internal\{Container, Loader};
 
 /**
  * A wrapper to provide access from anywhere
@@ -16,7 +16,6 @@ final class Enable
     /**
      * Turns on processing og generics for PHP
      * @param ClassLoader|null $composer
-     * @return void
      */
     public function __construct(?ClassLoader $composer=null)
     {
@@ -27,7 +26,7 @@ final class Enable
 
         $container = Container::getInstance();
 
-        $loader = new Loader($container);
+        $loader = new Loader($container, $composer);
         Concrete::setLoader($loader);
     }
 

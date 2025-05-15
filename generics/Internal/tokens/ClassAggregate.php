@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal\tokens;
+namespace grikdotnet\generics\Internal\tokens;
 
 /**
  * @internal

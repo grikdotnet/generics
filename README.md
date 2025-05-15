@@ -1,5 +1,5 @@
 # Generics in PHP
-For 15 years I watched people discussing generics in PHP.
+For 15 years people are looking for ways to implement generics in PHP.
 [Anthony Ferrara](https://wiki.php.net/rfc/protocol_type_hinting),
 [Elliot Levin](https://github.com/TimeToogo/PHP-Generics),
 [Nikita Popov](https://github.com/PHPGenerics/php-generics-rfc/issues/45),
@@ -8,7 +8,7 @@ and others were trying on and on.
 
 In 2023 PHP Foundation funded 
 [a year of research](https://thephp.foundation/blog/2024/08/19/state-of-generics-and-collections/) 
-in generics implementation. I believe, a complex perfect solution was never a PHP way, though.
+in generics implementation. I believe a complex perfect solution was never a PHP way, though.
 
 PHP changed a lot over the years, and the old solutions may actually work now, with little tweaks.
 
@@ -18,27 +18,28 @@ To evaluate, please clone the repo, and run `composer install`.
 With this solution I hope to convince people that generics programming is actually possible now. 
 And hope to see a partial implementation natively in PHP some day.
  
-### Why do you need generics
-Data obtained from databases, APIs, and other people code sometimes contain unexpected structure. 
+### Why do you need generics?
+Data obtained from databases, APIs, and 3rd party code may contain unexpected structure. 
 We write lots of checks, but it’s tedious and error-prone.
 For single-value variables we define types of parameters to ensure the data comes as expected. 
-Generics allow to define types for collections.
+Generics allow defining types for collections.
 Without generics, data sets are either arrays, allowing any data, or you have to define a separate class
 with the same functionality for each set of records.
-Generics let us write a template class once, and define a concrete type when we make an instance.
-This allows ensuring the structure of the data, and skip endless checks for NULL and FALSE.
+Generics let us write a template class once and define a concrete type when we make an instance.
+This allows ensuring the structure of the data and skip endless checks for NULL and FALSE.
 
 ### Syntax
-First, call `new \Generics\Enable();` before the generic functionality is used.
+First, call `new \grikdotnet\generics\Enable();` before the generic functionality is used.
 
 Let's define a wildcard template declaration. Of course, it can be accompanied by the PHPDoc tags for static analysis.
+
 ```php
 /**
  * @template T
  */
 #[\Generics\T]
 class Collection extends \ArrayObject{
-    use \Generics\GenericTrait;
+    use \grikdotnet\generics\GenericTrait;
 
     /**
      * @param $key
@@ -54,11 +55,12 @@ class Collection extends \ArrayObject{
 Create an instance of a concrete type:
 ```php
 /** @var Collection<int> $collection */
-$collection = Collection::new("int")();
+$collection = new (Collection::T("int"))();
 $collection[] = 42;
 ```
 
 We can use this collection with a concrete type as a parameter:
+
 ```php
 class Bar{
     /**
@@ -75,10 +77,10 @@ class Bar{
     }
 }
 ```
-When we fill the collection with values from a database or an API data, and miss a check for
+When we fill the collection with values from a database or API data, and miss a check for
 a null, false, '' or an empty array, we can be sure the `multiply()` method will not silently return 0.
 
-The code
+This code
 ```php
 $foo[] = null;
 ```
@@ -115,7 +117,7 @@ What changed: we've got Attributes and First-class callables. According to the
 hate incomplete solutions, and we are stuck.
 <br><br> 
 The major use case for generics is collections of records from a database or an API.
-Let's do this part, as it use to happen in PHP.
+Let's do this part.
 
 ### How it works
 1. When enabled, an autoloader and a "generic" file wrapper are registered. 
@@ -130,13 +132,13 @@ Please check the [TemplateDeclarationTest](https://github.com/grikdotnet/generic
 * Parsing PHP code that contains generics in an autoloader.
 * Generation of a virtual class for a concrete type.
 * Altering the source code of the loaded classes. A concrete type defined in the attribute
-for a methods parameters is added to parameter declaration.
+for methods parameters is added to parameter declaration.
 * A stream wrapper to load virtual classes with include() that uses opcache.
-* The \Generics\TypeError exception with the correct error message and a backtrace.
+* The TypeError exception with the correct error message and a backtrace.
+* Caching the generated concrete classes in opcache, as well as results of parsing the template classes, avoiding overhead in runtime.
+
 
 ### Can be implemented
-* Caching the generated concrete classes in opcache, as well as results of parsing 
-of the template classes, and completely avoiding overhead in runtime.
 * Generic union types 
 * Generic types for property hooks in PHP 8.4
 * Generic return types

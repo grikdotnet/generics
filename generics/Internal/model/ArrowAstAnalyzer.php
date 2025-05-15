@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Generics\Internal\model;
+namespace grikdotnet\generics\Internal\model;
 
-use Generics\Internal\tokens\ConcreteInstantiationToken;
+use grikdotnet\generics\Internal\tokens\ConcreteInstantiationToken;
 
 /**
  * @internal
