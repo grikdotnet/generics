@@ -8,6 +8,13 @@ namespace samples;
 #[\Generics\T]
 class Collection extends \ArrayObject
 {
-    public function offsetSet($key, #[\Generics\T] $value): void
+    use \grikdotnet\generics\GenericTrait;
+
+    /**
+     * @param $key
+     * @param $value
+     * @return Void
+     */
+    public function offsetSet($key, #[\Generics\T] $value): Void
     {}
 }

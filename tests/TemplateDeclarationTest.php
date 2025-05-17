@@ -4,7 +4,7 @@ if (!class_exists(ParserTestBase::class, false)) {
     include 'ParserTestBase.php';
 }
 
-use grikdotnet\generics\Internal\tokens\Parameter;
+use grikdotnet\generics\Internal\tokens\{ClassAggregate, MethodHeaderAggregate, Parameter};
 
 final class TemplateDeclarationTest extends ParserTestBase
 {
@@ -37,8 +37,12 @@ final class TemplateDeclarationTest extends ParserTestBase
 
         $fileAggregate = $this->traverse($code);
         self::assertCount(2,$fileAggregate->classAggregates);
-        self::assertEquals(ACME\Foo::class,$fileAggregate->classAggregates['ACME\Foo']->classname);
-        self::assertEquals(Foo\Bar::class,$fileAggregate->classAggregates['Foo\Bar']->classname);
+        self::assertEquals(\ACME\Foo::class,$fileAggregate->classAggregates['ACME\Foo']->getFQCN());
+        self::assertEquals('Foo',$fileAggregate->classAggregates['ACME\Foo']->classname);
+        self::assertEquals('ACME',$fileAggregate->classAggregates['ACME\Foo']->namespace);
+        self::assertEquals(Foo\Bar::class,$fileAggregate->classAggregates['Foo\Bar']->getFQCN());
+        self::assertEquals('Bar',$fileAggregate->classAggregates['Foo\Bar']->classname);
+        self::assertEquals('Foo',$fileAggregate->classAggregates['Foo\Bar']->namespace);
         self::assertTrue($fileAggregate->classAggregates['ACME\Foo']->isTemplate());
         self::assertTrue($fileAggregate->classAggregates['Foo\Bar']->isTemplate());
     }
@@ -55,14 +59,15 @@ final class TemplateDeclarationTest extends ParserTestBase
             private function bar(){} 
         }';
 
-        $expected = new \grikdotnet\generics\Internal\tokens\ClassAggregate('Foo');
+        $expected = new ClassAggregate('Foo');
         $expected->setIsTemplate();
         $expected->addMethodAggregate(
-            $methodAggregate = new \grikdotnet\generics\Internal\tokens\MethodHeaderAggregate(
+            $methodAggregate = new MethodHeaderAggregate(
                 offset: 60,
                 length: 146,
                 name: '__construct',
-                headline: '#[\Generics\ReturnT] public function __construct( int &$x, #[\Generics\T] $param, #[\Generics\T] $y=null, float ... $z)'
+                headline: '#[\Generics\ReturnT] public function __construct( int &$x, #[\Generics\T] $param, #[\Generics\T] $y=null, float ... $z)',
+                void: false
             )
         );
         $methodAggregate->setWildcardReturn();
@@ -88,14 +93,15 @@ final class TemplateDeclarationTest extends ParserTestBase
             private function bar(){} 
         }';
 
-        $expected = new \grikdotnet\generics\Internal\tokens\ClassAggregate('Foo');
+        $expected = new ClassAggregate('Foo');
         $expected->setIsTemplate();
         $expected->addMethodAggregate(
-            $methodAggregate = new \grikdotnet\generics\Internal\tokens\MethodHeaderAggregate(
+            $methodAggregate = new MethodHeaderAggregate(
                 offset: 60,
                 length: 110,
                 name: 'foo',
-                headline: '#[\Generics\ReturnT] public function foo( #[\Generics\T] $param ): int'
+                headline: '#[\Generics\ReturnT] public function foo( #[\Generics\T] $param ): int',
+                void: false
             )
         );
         $methodAggregate->setWildcardReturn();
@@ -104,5 +110,35 @@ final class TemplateDeclarationTest extends ParserTestBase
         $fileAggregate = $this->traverse($code);
         self::assertEquals('Foo',$fileAggregate->classAggregates['Foo']->classname);
         self::assertEquals($expected, $fileAggregate->classAggregates['Foo']);
+    }
+
+    public function testReturnVoidAndNamespace(): void
+    {
+        $code = '<?php
+        namespace ACME;
+        #[\Generics\T]
+        class Foo{
+            #[\Generics\ReturnT]
+            public function foo(#[\Generics\T] $param): void
+            {}
+        }';
+
+        $expected = new ClassAggregate('Foo','ACME');
+        $expected->setIsTemplate();
+        $expected->addMethodAggregate(
+            $methodAggregate = new MethodHeaderAggregate(
+                offset: 84,
+                length: 81,
+                name: 'foo',
+                headline: '#[\Generics\ReturnT] public function foo(#[\Generics\T] $param): void',
+                void: true
+            )
+        );
+        $methodAggregate->setWildcardReturn();
+        $methodAggregate->addParameter(new Parameter(offset: 152, length:6, name: 'param', is_wildcard: true));
+
+        $fileAggregate = $this->traverse($code);
+        self::assertEquals('Foo',$fileAggregate->classAggregates[ACME\Foo::class]->classname);
+        self::assertEquals($expected, $fileAggregate->classAggregates[ACME\Foo::class]);
     }
 }

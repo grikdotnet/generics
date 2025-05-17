@@ -100,7 +100,6 @@ class Loader{
     public function createConcreteClass(string $wildcard_class, array $types): bool
     {
         $concrete_class_name = ConcreteView::makeConcreteName($wildcard_class, $types);
-        $classAggregate = null;
         if ($this->opcache->is_available) {
             if ($this->opcache->loadVirtualClass($concrete_class_name)) {
                 return true;
@@ -108,28 +107,26 @@ class Loader{
         }
         $classAggregate = $this->container->getClassTokens($wildcard_class);
         if ($classAggregate  === null) {
-            //read and parse wildcard source file
+            //read and parse the wildcard source file
             if (!($path = $this->composer->findClassFile($wildcard_class))) {
                 return false;
             }
             if (in_array($path,$this->container->skip_files)) {
                 return false;
             }
-            if ($this->container->getFileTokens($path) !== null) {
-                return false;
+            if (null === $tokens = $this->container->getFileTokens($path)) {
+                if ( !($content = $this->getFileContents($path)) ) {
+                    $this->container->addToSkipFiles($path);
+                    return false;
+                }
+                $tokens = $this->parse($path, $content);
+                if ($tokens->isEmpty()) {
+                    $this->container->addToSkipFiles($path);
+                    // nothing to do with this file
+                    return false;
+                }
+                $this->container->addFileTokens($tokens);
             }
-            if ( !($content = $this->getFileContents($path)) ) {
-                $this->container->addToSkipFiles($path);
-                return false;
-            }
-
-            $tokens = $this->parse($path, $content);
-            if ($tokens->isEmpty()) {
-                $this->container->addToSkipFiles($path);
-                // nothing to do with this file
-                return false;
-            }
-            $this->container->addFileTokens($tokens);
             if (!isset($tokens->classAggregates[$wildcard_class])) {
                 return false;
             }
@@ -160,8 +157,11 @@ class Loader{
         $parser = new Php8(new Lexer);
         $ast = $parser->parse($content, $errorHandler);
         //the Visitor class is actually a model with logic
+        $nameResolver = new \PhpParser\NodeVisitor\NameResolver;
         $visitor = new GenericsVisitor($path, $content);
-        $traverser = new NodeTraverser($visitor);
+        $traverser = new NodeTraverser();
+        $traverser->addVisitor($nameResolver);
+        $traverser->addVisitor($visitor);
         $traverser->traverse($ast);
 
         return $visitor->getFileTokens();

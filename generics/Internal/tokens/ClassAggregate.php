@@ -19,7 +19,18 @@ final class ClassAggregate
 
     public function __construct(
         public readonly string $classname,
+        public readonly string $namespace = ''
     ){}
+
+    static public function fromArray(array $data): self
+    {
+        $instance = new self($data[self::CLASSNAME]);
+        $instance->is_template = $data[self::IS_TEMPLATE];
+        foreach ($data[self::TOKENS] as $k => $t) {
+            $instance->tokens[$k] = MethodHeaderAggregate::fromArray($t);
+        }
+        return $instance;
+    }
 
     public function addMethodAggregate(MethodHeaderAggregate $method): void
     {
@@ -62,21 +73,16 @@ final class ClassAggregate
         return $array;
     }
 
-    static public function fromArray(array $data): self
-    {
-        $instance = new self($data[self::CLASSNAME]);
-        $instance->is_template = $data[self::IS_TEMPLATE];
-        foreach ($data[self::TOKENS] as $k => $t) {
-            $instance->tokens[$k] = MethodHeaderAggregate::fromArray($t);
-        }
-        return $instance;
-    }
-
     /**
-     * @return MethodHeaderAggregate[]
+     * @return array[int,MethodHeaderAggregate]
      */
     public function getTokens(): array
     {
         return $this->tokens;
+    }
+
+    public function getFQCN(): string
+    {
+        return ('' === $this->namespace) ? $this->classname : ($this->namespace.'\\'.$this->classname);
     }
 }

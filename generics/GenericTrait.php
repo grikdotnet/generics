@@ -7,18 +7,17 @@ use Generics\T;
 trait GenericTrait {
 
     /**
-     * @template T
-     * @param string|class-string<T> $type
-     * @return self
+     * @return self::class
      */
     static public function T(string ... $types): string
     {
         if (!Enable::enabled()) {
             throw new \RuntimeException('Generics processing is not enabled');
         }
-        if ([] === (new \ReflectionClass(__CLASS__))->getAttributes(T::class)) {
+        if ([] === ($r = new \ReflectionClass(__CLASS__))->getAttributes(T::class)) {
             throw new \RuntimeException('The class '.__CLASS__.' is not a generic template');
         }
+        $namespace = $r->getNamespaceName();
         return Concrete::createClass(__CLASS__,$types);
     }
 

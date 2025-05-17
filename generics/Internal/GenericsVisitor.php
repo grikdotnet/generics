@@ -46,7 +46,7 @@ final class GenericsVisitor extends NodeVisitorAbstract {
             $analyzer = new ClassAstAnalyzer($this->source_code);
             $classAggregate = $analyzer->do($node);
             if ($classAggregate->hasGenerics()) {
-                $this->classes[$classAggregate->classname] = $classAggregate;
+                $this->classes[$classAggregate->getFQCN()] = $classAggregate;
             }
         }
         if ($node instanceof \PhpParser\Node\Expr\ArrowFunction) {

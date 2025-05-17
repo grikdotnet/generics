@@ -24,7 +24,8 @@ class MethodHeaderAggregate {
         public readonly int $offset,
         public readonly int $length,
         public readonly string $name,
-        public string $headline
+        public readonly string $headline,
+        public readonly bool $void = false
     ){}
 
     /**

@@ -14,6 +14,8 @@ readonly class ConcreteView {
         R_ARROW = '›',
         NS = '⧵';
 
+    private const BUILTIN_TYPES = ['int','float','bool','true','false','null','string','array','callable'];
+
     /**
      * Generate a string of the concrete type from the template class and a concrete type
      *
@@ -34,16 +36,20 @@ readonly class ConcreteView {
     {}
 
     /**
-     * Generate class declaration when an instance is created with a trait
+     * Generate the class declaration when an instance is created with a trait
      *
      * @param string[] $concrete_types
      * @return string
      */
     public function generateConcreteDeclaration(array $concrete_types): string
     {
-        $base_class = $this->class->classname;
+        $namespace_clause = '';
+        if ($this->class->namespace !== '') {
+            $namespace_clause = 'namespace '.$this->class->namespace.';';
+        }
 
-        $code = "class ".self::makeConcreteName($base_class,$concrete_types).' extends '.$base_class.'{';
+        $code = $namespace_clause.'class '.self::makeConcreteName($this->class->classname,$concrete_types)
+            .' extends '.$this->class->classname.'{';
         foreach ($this->class->getTokens() as $token) {
             if ($token instanceof MethodHeaderAggregate) {
                 $code .= $this->generateMethod($token, $concrete_types);
@@ -68,7 +74,11 @@ readonly class ConcreteView {
             if ($parameter->type === '') {
                 if ($parameter->is_wildcard && $concrete_param_types !== []){
                     if ($concrete_param_types) {
-                        $typed_parameters[] = array_shift($concrete_param_types).' $'.$parameter->name;
+                        $type = array_shift($concrete_param_types);
+                        if (!in_array($type,self::BUILTIN_TYPES) && $type !== '' && $type[0] !== '\\') {
+                            $type = '\\'.$type;
+                        }
+                        $typed_parameters[] = $type.' $'.$parameter->name;
                     }
                 } else {
                     $typed_parameters[] = '$'.$parameter->name;
@@ -83,9 +93,10 @@ readonly class ConcreteView {
             }
             $parameters[] = '$'.$parameter->name;
         }
+        $return = $method->void ? '' : 'return ';
         $code = $method->headline.
             '{try{'.
-                'return (fn('.implode(',',$typed_parameters).')=>parent::'.$method->name.'(...func_get_args()))'.
+            $return.'(fn('.implode(',',$typed_parameters).')=>parent::'.$method->name.'(...func_get_args()))'.
                     '('.implode(',',$parameters).');'.
             '}catch(\TypeError $e){throw \grikdotnet\generics\TypeError::fromTypeError($e);}'.
         '}';
