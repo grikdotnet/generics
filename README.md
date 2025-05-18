@@ -1,37 +1,41 @@
 # Generics in PHP
-For 15 years people are looking for ways to implement generics in PHP.
+For 15 years people were trying to implement generics in PHP.
 [Anthony Ferrara](https://wiki.php.net/rfc/protocol_type_hinting),
 [Elliot Levin](https://github.com/TimeToogo/PHP-Generics),
 [Nikita Popov](https://github.com/PHPGenerics/php-generics-rfc/issues/45),
 [Anton Sukhachev](https://github.com/mrsuh/php-generics),
-and others were trying on and on.
+and others.
 
-In 2023 PHP Foundation funded 
-[a year of research](https://thephp.foundation/blog/2024/08/19/state-of-generics-and-collections/) 
+In 2023 PHP Foundation funded [a year of research](https://thephp.foundation/blog/2024/08/19/state-of-generics-and-collections/) 
 in generics implementation. I believe a complex perfect solution was never a PHP way, though.
 
-PHP changed a lot over the years, and the old solutions may actually work now, with little tweaks.
+PHP changed a lot over the years, and the old approach may actually work now.
+This library provides a way to use the generic progrming paradigm in PHP. 
 
-This is a partial implementation of generics following the early ideas.  
-To evaluate, please clone the repo, and run `composer install`.
-
-With this solution I hope to convince people that generics programming is actually possible now. 
+I hope to convince people that generics programming is actually possible now. 
 And hope to see a partial implementation natively in PHP some day.
+
+NB: Generic programming has nothing to do with static analysis in PHPStan.
+It is about dynamic data types defined and checked in runtime. You are welcome to use both.
  
 ### Why do you need generics?
-Data obtained from databases, APIs, and 3rd party code may contain unexpected structure. 
-We write lots of checks, but it’s tedious and error-prone.
-For single-value variables we define types of parameters to ensure the data comes as expected. 
-Generics allow defining types for collections.
-Without generics, data sets are either arrays, allowing any data, or you have to define a separate class
-with the same functionality for each set of records.
-Generics let us write a template class once and define a concrete type when we make an instance.
-This allows ensuring the structure of the data and skip endless checks for NULL and FALSE.
 
-### Syntax
-First, call `new \grikdotnet\generics\Enable();` before the generic functionality is used.
+To write much less code for data type checks.
 
-Let's define a wildcard template declaration. Of course, it can be accompanied by the PHPDoc tags for static analysis.
+Data obtained from databases, APIs, and 3rd party code may have unexpected structure.
+For single-value variables we define types of parameters to ensure the data comes as expected.
+But for an array or ArrayObject one cannot define types of values in it.
+
+Generics allow defining types for collections with just one short attribute.
+When we fill a generic object with values, and for some reason a null, false, '' or something else comes in, 
+PHP will trigger the TypeException, same as with the singe-value parameters.
+And yet you have just one Collection class for all types you need.
+
+### Howto
+1. Add the package as a dependency for Composer, as usually: `composer require grikdotnet\generics`. 
+2. Add a call `new \grikdotnet\generics\Enable();` in bootstrap to enable the class loader.
+
+3. Define a wildcard declaration. Of course, it can be accompanied by the PHPDoc tags for static analysis.
 
 ```php
 /**
@@ -46,50 +50,43 @@ class Collection extends \ArrayObject{
      * @param T $value
      * @return void
      */
-    public function offsetSet( $key, #[\Generics\T] $value ){
+    public function offsetSet(#[\Generics\T] $key, #[\Generics\T] $value )
+    {
         parent::offsetSet($key,$value);
     }
 }
 ```
 
-Create an instance of a concrete type:
+Using trait is optional. It provides a convenient method T() to create concrete types:
+
 ```php
-/** @var Collection<int> $collection */
-$collection = new (Collection::T("int"))();
-$collection[] = 42;
+/** @var Collection $collection */
+$collection = new (Collection::T("int","float"))();
+$collection[] = 0.5;
 ```
+That's it. Now the ArrayObject has types defined for the values.
+Passing any data that is not a float will tribber the TypeError exception.
 
-We can use this collection with a concrete type as a parameter:
+Here we define the type of parameter using a typed collection:
 
 ```php
-class Bar{
+class Model{
     /**
-    * @param Collection<int> $integers
+    * @param Collection $numeric
     * @return int
     */
-    public function multiply(#[\Generics\T("Collection<int>")] $integers): int 
+    public function multiply(#[\Generics\T("Collection<int><float>")] $numeric): int 
     {
         $result = 0;
-        for ($integers as $value) {
+        for ($numeric as $key => $value) {
             $value *= 2;
         }
         return $result;
     }
 }
 ```
-When we fill the collection with values from a database or API data, and miss a check for
-a null, false, '' or an empty array, we can be sure the `multiply()` method will not silently return 0.
 
-This code
-```php
-$foo[] = null;
-```
-will trigger a TypeError exception with a proper error message and a trace, as PHP natively does.
-Now we can skip a type check of each element in a loop over a data set in every method.
-
-Tests [InstantiationTraitTest.php](tests/InstantiationTraitTest.php) and
-[InvalidParameterTest.php](tests/InvalidParameterTest.php)
-contain some runnable code.
+Now we can avoid writing a lot of type checks in a loop over data sets in every method.
 
 ### Why it is possible now
 1. Early implementations were slow.
@@ -112,21 +109,7 @@ incompatible with PHP syntax.
 What changed: we've got Attributes and First-class callables. According to the
 [PHP manual](https://www.php.net/manual/en/language.attributes.overview.php):
 > With attributes the generic implementation of a feature and its concrete use in an application can be decoupled.
-
-4. It is quite difficult to implement generics for arrays and interfaces. Good engineers
-hate incomplete solutions, and we are stuck.
-<br><br> 
-The major use case for generics is collections of records from a database or an API.
-Let's do this part.
-
-### How it works
-1. When enabled, an autoloader and a "generic" file wrapper are registered. 
-2. When a new class is autoloaded, or a template class with a trait is instantiated, 
-the loader parses the source code and generates a virtual concrete class for 
-a concrete type. The virtual concrete class extends the wildcard class.
-Please check the [TemplateDeclarationTest](https://github.com/grikdotnet/generics/blob/master/tests/TemplateDeclarationTest.php) for details of parsing files. 
-3. `include()` cals a wrapper that serves the generated code for the virtual class.
-4. PHP creates an instance of a concrete virtual class and a Closure that calls a constructor with parameters provided.
+ 
 
 ### Implemented
 * Parsing PHP code that contains generics in an autoloader.
@@ -142,5 +125,3 @@ for methods parameters is added to parameter declaration.
 * Generic union types 
 * Generic types for property hooks in PHP 8.4
 * Generic return types
-* Partial support for the final wildcard classes
-* Autocompletion for the generic parameters in PHPStorm with a Meta Storm plugin.
