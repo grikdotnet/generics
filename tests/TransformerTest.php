@@ -21,7 +21,7 @@ final class TransformerTest extends ParserTestBase
         $expected = '<?php
         class Foo{
             public function __construct(
-                ACME\Bar‹Foo› $param,
+                ACME\Bar‹⧵Foo› $param,
                 \ACME\Bar‹⧵Qwe⧵Test›‹int› $y,
             ){}
         }';

@@ -27,6 +27,9 @@ readonly class ConcreteView {
     {
         $ct = '';
         foreach ($concrete_types as $t) {
+            if (!in_array($t,self::BUILTIN_TYPES) && $t !== '' && $t[0] !== '\\') {
+                $t = '\\'.$t;
+            }
             $ct .= self::L_ARROW.str_replace('\\',self::NS,$t).self::R_ARROW;
         }
         return $base_type.$ct;

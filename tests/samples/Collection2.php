@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 
 namespace samples;
 
@@ -6,7 +6,7 @@ namespace samples;
  * @template T
  */
 #[\Generics\T]
-class Collection extends \ArrayObject
+class Collection2 extends \ArrayObject
 {
     use \grikdotnet\generics\GenericTrait;
 
@@ -15,7 +15,7 @@ class Collection extends \ArrayObject
      * @param $value
      * @return Void
      */
-    public function offsetSet($key, #[\Generics\T] $value): Void
+    public function offsetSet(#[\Generics\T] $key, #[\Generics\T] $value): Void
     {
         parent::offsetSet($key, $value);
     }

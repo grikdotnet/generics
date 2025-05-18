@@ -25,7 +25,7 @@ class InstantiationTraitTest extends TestCase
     public function testInvalidType()
     {
         $this->expectException(\grikdotnet\generics\TypeError::class);
-        $this->expectExceptionMessage('Foo‹ABC›‹int›::__construct: Argument #1 ($x) must be of type ABC, string given');
+        $this->expectExceptionMessage('Foo‹⧵ABC›‹int›::__construct: Argument #1 ($x) must be of type ABC, string given');
         new (Foo::T("ABC","int"))('abc',4);
     }
 }
