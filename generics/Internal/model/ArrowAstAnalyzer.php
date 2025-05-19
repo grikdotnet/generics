@@ -3,6 +3,7 @@
 namespace grikdotnet\generics\Internal\model;
 
 use grikdotnet\generics\Internal\tokens\ConcreteInstantiationToken;
+use grikdotnet\generics\Internal\view\ConcreteView;
 
 /**
  * @internal
@@ -41,16 +42,19 @@ class ArrowAstAnalyzer {
         } else{
             throw new \TypeError('Invalid parameter type for the generic instance');
         }
-        $instance_class = substr($source_code,
+        $wildcard_class = substr($source_code,
             $s = $node->expr->class->getStartFilePos(),
             $node->expr->class->getEndFilePos() - $s +1
         );
 
+        $concretw_class_name = ConcreteView::makeConcreteName($wildcard_class,$concrete_types);
+
         return new ConcreteInstantiationToken(
             offset: $node->expr->class->getStartFilePos(),
-            length: strlen($instance_class),
-            type: $instance_class,
-            concrete_types: $concrete_types
+            length: strlen($wildcard_class),
+            type: $wildcard_class,
+            concrete_types: $concrete_types,
+            concrete_name: $concretw_class_name
         );
     }
 }

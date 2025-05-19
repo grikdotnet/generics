@@ -3,6 +3,7 @@
 namespace grikdotnet\generics\Internal;
 
 use grikdotnet\generics\Internal\tokens\ClassAggregate;
+use grikdotnet\generics\Internal\tokens\ConcreteInstantiationToken;
 use grikdotnet\generics\Internal\tokens\FileAggregate;
 
 /**
@@ -20,20 +21,9 @@ class Container
      */
     public array $classAggregates = [];
     /**
-     * Contents of files with code to parse for tokens
-     * @var array<non-empty-string,string>
+     * @var array<class-string,ConcreteInstantiationToken>
      */
-    public array $files = [];
-    /**
-     * A virtual file is an augmented code from a real file with concrete types from attributes
-     * @var array<string,VirtualFile> $vfiles
-     */
-    public array $vfiles = [];
-    /**
-     *  A virtual class is a class with concrete types extending a template class
-     *  @var array<class-string,VirtualFile> $virtual_classes
-     */
-    public array $vclasses = [];
+    public array $instantiations = [];
     /**
      * @var array<string>
      */
@@ -52,6 +42,12 @@ class Container
     private array $files_tokens_cache = [];
 
     /**
+     * Populated from OpCache, contains dehydrated tokens as numeric arrays
+     * @var array
+     */
+    private array $instantiations_cache = [];
+
+    /**
      * A boolean mask marking which items were added to store in Opcache
      * @var int
      */
@@ -68,16 +64,6 @@ class Container
     private function __construct()
     {}
 
-    /**
-     * @param class-string $class_name
-     * @return bool
-     */
-    public function isClassTemplate(string $class_name): bool
-    {
-        return ($classTokens = $this->getClassTokens($class_name))
-            && $classTokens->isTemplate()
-        ;
-    }
 
     /**
      * @param class-string $class_name
@@ -109,6 +95,22 @@ class Container
         return null;
     }
 
+
+    /**
+     * @param class-string $class
+     * @return ConcreteInstantiationToken|null
+     */
+    public function getInstantiationTokens(string $class): ?ConcreteInstantiationToken
+    {
+        if (isset($this->instantiations[$class])) {
+            return $this->instantiations[$class];
+        }
+        if (isset($this->instantiations_cache[$class])) {
+            return $this->instantiations[$class] = new ConcreteInstantiationToken(...$this->instantiations_cache[$class]);
+        }
+        return null;
+    }
+
     /**
      * @param FileAggregate $fileAggregate
      * @return void
@@ -118,6 +120,9 @@ class Container
         $this->fileAggregates[$fileAggregate->path] = $fileAggregate;
         foreach ($fileAggregate->classAggregates as $c) {
             $this->classAggregates[$c->classname] = $c;
+        }
+        foreach ($fileAggregate->instantiations as $i) {
+            $this->instantiations[ltrim($i->concrete_name,'\\')] = $i;
         }
         $this->modified |= 1;
     }
@@ -130,27 +135,6 @@ class Container
     {
         $this->skip_files[] = $path;
         $this->modified |= 1;
-    }
-
-    /**
-     * @param VirtualFile $param
-     * @return void
-     */
-    public function addAugmentedFile(VirtualFile $param)
-    {
-        $this->vfiles[$param->path] = $param;
-    }
-
-    /**
-     * @param non-empty-string $filename
-     * @return VirtualFile | null
-     */
-    public function getVirtualFile(string $filename): ?VirtualFile
-    {
-        if (isset($this->vfiles[$filename])) {
-            return $this->vfiles[$filename];
-        }
-        return null;
     }
 
     public function isModified(): bool
@@ -167,13 +151,15 @@ class Container
      *
      * @param array $file_tokens
      * @param array $class_tokens
+     * @param array $instantiations
      * @param array $skip_files
      * @return void
      */
-    public function setCache(array $file_tokens, array $class_tokens, array $skip_files): void
+    public function setCache(array $file_tokens, array $class_tokens, array $instantiations, array $skip_files): void
     {
         $this->files_tokens_cache = $file_tokens;
         $this->classes_tokens_cache = $class_tokens;
+        $this->instantiations_cache = $instantiations;
         $this->skip_files = $skip_files;
     }
 }

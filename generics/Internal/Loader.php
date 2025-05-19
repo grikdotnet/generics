@@ -53,6 +53,10 @@ class Loader{
      */
     public function autoloader(string $class): bool
     {
+        // if the class is a known concrete type, create it
+        if (null !== $iToken = $this->container->getInstantiationTokens($class)) {
+            return $this->createConcreteClass($iToken->type,$iToken->concrete_types);
+        }
         //find class location via Composer
         if (!($path = $this->composer->findClassFile($class))) {
             return false;
@@ -99,6 +103,7 @@ class Loader{
      */
     public function createConcreteClass(string $wildcard_class, array $types): bool
     {
+        $wildcard_class = ltrim($wildcard_class,'\\');
         $concrete_class_name = ConcreteView::makeConcreteName($wildcard_class, $types);
         if ($this->opcache->is_available) {
             if ($this->opcache->loadVirtualClass($concrete_class_name)) {

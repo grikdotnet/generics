@@ -1,0 +1,5 @@
+.gitattributes export-ignore
+examples export-ignore
+docker export-ignore
+documentation export-ignore
+tests export-ignore

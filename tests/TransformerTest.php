@@ -43,13 +43,15 @@ final class TransformerTest extends ParserTestBase
             offset: 129,
             length: 8,
             type: "Acme\Foo",
-            concrete_types: ["int"]
+            concrete_types: ["int"],
+            concrete_name: 'Acme\Foo‹int›'
         );
         $expected[194] = new \grikdotnet\generics\Internal\tokens\ConcreteInstantiationToken(
             offset: 194,
             length: 9,
             type: "\Acme\Bar",
-            concrete_types: ["MyClass"]
+            concrete_types: ["MyClass"],
+            concrete_name: '\Acme\Bar‹⧵MyClass›'
         );
 
         $fileAggregate = $this->traverse($code);
@@ -66,7 +68,8 @@ final class TransformerTest extends ParserTestBase
             offset: 78,
             length: 3,
             type: "Foo",
-            concrete_types: ["\Acme\Bar"]
+            concrete_types: ["\Acme\Bar"],
+            concrete_name: 'Foo‹⧵Acme⧵Bar›'
         );
 
         $fileAggregate = $this->traverse($code);
@@ -83,6 +86,7 @@ final class TransformerTest extends ParserTestBase
             length: 3,
             type: "Foo",
             concrete_types: ["\Acme\Bar"],
+            concrete_name: 'Foo‹⧵Acme⧵Bar›'
         );
 
         $fileAggregate = $this->traverse($code);
