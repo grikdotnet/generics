@@ -43,7 +43,7 @@ class Opcache {
     {
         if ($this->is_available && opcache_is_script_cached(self::GENERIC_TOKENS_KEY)) {
             if (is_array($data = @include self::GENERIC_TOKENS_KEY)) {
-                $container->setCache($data[0],$data[1],$data[2]);
+                $container->setCache($data[0],$data[1],$data[2],$data[3]);
                 return true;
             }
         }
@@ -63,18 +63,12 @@ class Opcache {
         if ($container->areNewTokens()) {
             $data[0] = array_map(fn ($c) => $c->toArray(), $container->fileAggregates);
             $data[1] = array_map(fn ($c) => $c->toArray(), $container->classAggregates);
-            $data[2] = $container->skip_files;
+            $data[2] = array_map(fn ($c) => $c->toArray(), $container->instantiations);
+            $data[3] = $container->skip_files;
             $data_to_write = '<?php return '. var_export($data,true).';';
             PharWrapperAdapter::write(self::GENERIC_TOKENS_KEY, $data_to_write);
         }
 
-        foreach ($container->vfiles as $vfile) {
-            $filename = self::PREFIX.$vfile->reference_path;
-            if (!opcache_is_script_cached($filename)){
-                $data = '<?php return '.var_export($vfile->content,true).';';
-                PharWrapperAdapter::write($filename, $data);
-            }
-        }
     }
 
     /**

@@ -3,7 +3,7 @@
 namespace grikdotnet\generics\Internal\tokens;
 
 /**
- * This is a DTO to pass composite result of parsing source code
+ * This is a DTO to pass the result of parsing source code
  */
 readonly class FileAggregate {
 
@@ -17,11 +17,11 @@ readonly class FileAggregate {
         /**
          * @var array<class-string, ClassAggregate>
          */
-        public array $classAggregates,
+        public array $classAggregates = [],
         /**
          * @var array<ConcreteInstantiationToken>
          */
-        public array $instantiations
+        public array $instantiations = []
     )
     {}
 

@@ -26,8 +26,7 @@ final class Enable
 
         $container = Container::getInstance();
 
-        $loader = new Loader($container, $composer);
-        Concrete::setLoader($loader);
+        Concrete::setLoader(new Loader($container, $composer));
     }
 
     public static function enabled(): bool
