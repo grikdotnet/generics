@@ -2,15 +2,14 @@
     "name": "grikdotnet/generics",
     "description": "generics implementation in PHP",
     "type": "library",
-    "version": "0.8",
     "require": {
-        "nikic/php-parser": "^5.4",
         "php": ">=8.2",
         "ext-tokenizer": "*",
         "ext-ctype": "*",
         "ext-mbstring":"*",
+        "ext-zend-opcache": "*",
         "composer-runtime-api": "*",
-        "ext-zend-opcache": "*"
+        "nikic/php-parser": "^5.4"
     },
     "autoload": {
         "psr-4": {

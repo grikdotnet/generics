@@ -17,7 +17,6 @@ trait GenericTrait {
         if ([] === ($r = new \ReflectionClass(__CLASS__))->getAttributes(T::class)) {
             throw new \RuntimeException('The class '.__CLASS__.' is not a generic template');
         }
-        $namespace = $r->getNamespaceName();
         return Concrete::createClass(__CLASS__,$types);
     }
 
