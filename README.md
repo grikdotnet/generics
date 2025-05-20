@@ -5,7 +5,7 @@
 * [How to use this package](#how-to-use)
 * [Syntax](documentation/syntax.md)
 * [System requirements and compatibility](documentation/compatibility.md)
-* [Implementation details](documentation/)
+* [Implementation details](documentation/implementation.md)
  
 ### Why do you need generics?
 [Generic programming](https://en.wikipedia.org/wiki/Generic_programming) is an algorithm where data types are declared as "to-be-specified-later", when needed.
