@@ -4,7 +4,8 @@
 * [Why do you need generics programming](#why-do-you-need-generics)
 * [How to use this package](#how-to-use)
 * [Syntax](documentation/syntax.md)
-
+* [System requirements and compatibility](documentation/compatibility.md)
+* [Implementation details](documentation/)
  
 ### Why do you need generics?
 [Generic programming](https://en.wikipedia.org/wiki/Generic_programming) is an algorithm where data types are declared as "to-be-specified-later", when needed.
@@ -39,7 +40,7 @@ And yet you have just one class declaration for all types you need.
 ### How to use
 1. Add the package as a dependency for Composer, as usually: `composer require grikdotnet\generics`. 
 2. Call `new \grikdotnet\generics\Enable();` in bootstrap to enable the class loader.
-3. Define a wildcard declaration. Of course, it can be accompanied by the PHPDoc tags for static analysis.
+3. Declare a wildcard class.
 
 ```php
 #[\Generics\T]
@@ -82,5 +83,10 @@ class Model{
 }
 ```
 
-Now we can avoid writing a lot of type checks in a loop over data sets in every method.
+This way data types of elements are checked by the PHP engine, and
+we can avoid writing a lot of type checks in a loop over data sets in every method.
 
+The syntax is fully compatible with PHP.
+If the generics are not enabled, the code will run without concrete types.
+
+Find more about syntax in the [documentation](documentation/syntax.md).
