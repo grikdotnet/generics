@@ -121,8 +121,9 @@ class PharWrapperAdapter {
                     $this->position = $count;
                     return self::$data;
                 }
+                $p = $this->position;
                 $this->position += $count;
-                return substr(self::$data,$this->position,$count);
+                return substr(self::$data,$p,$count);
             }
 
             public function stream_eof()
