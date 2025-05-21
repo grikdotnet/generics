@@ -15,3 +15,5 @@ Set a larger than default values cache TTL to avoid parsing of the generics decl
 If PHP does not have the phar extension, the "phar://" stream wrapper is registered.
 If the phar extension is loaded, the "phar://" stream wrapper is temporarily re-registered to save a concrete 
 class declaration to Opcache, and reset to the system default.
+
+[Next Chapter: Solution diagrams](implementation.md)

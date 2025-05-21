@@ -55,3 +55,6 @@ The static analysis helps with the code structure. You are welcome to use both.
 * Wildcard return types
 * Wildcard union and intersection types
 * Generic types for property hooks in PHP 8.4
+
+
+[Next chapter: Syntax](syntax.md)

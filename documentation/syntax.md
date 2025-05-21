@@ -116,3 +116,5 @@ A type that is a reserved word, such as int, should be provided in quotes.
  
 * Union and intersection types are not supported.
 * Usage of relative class types "self", "parent", and "static" may cause unpredicable behavior.
+
+[Next Chapter: System requirements](compatibility.md)

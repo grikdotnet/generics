@@ -9,3 +9,5 @@ A class autoloader parses code:
 Creating the concrete type instances
 
 <img src="generics-2.svg" width="700">
+
+[Next Chapter: Performance impact](performance.md)

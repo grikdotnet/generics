@@ -5,7 +5,7 @@
 * [How to use this package](#how-to-use)
 * [Syntax](documentation/syntax.md)
 * [System requirements and compatibility](documentation/compatibility.md)
-* [Implementation details](documentation/implementation.md)
+* [Solution diagrams](documentation/implementation.md)
 * [Performance impact](documentation/performance.md)
  
 ### Why do you need generics?
@@ -86,8 +86,5 @@ class Model{
 
 This way data types of elements are checked by the PHP engine, and
 we can avoid writing a lot of type checks in a loop over data sets in every method.
-
-The syntax is fully compatible with PHP.
-If the generics are not enabled, the code will run without concrete types.
 
 Find more about syntax in the [documentation](documentation/syntax.md).
